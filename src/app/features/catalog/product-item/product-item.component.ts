@@ -1,0 +1,98 @@
+import { Component, input, output, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { Product } from '../../../core/models/catalog.models';
+
+const DESC_LIMIT = 80;
+
+@Component({
+  selector: 'app-product-item',
+  standalone: true,
+  imports: [CommonModule, MatButtonModule, MatIconModule, MatCheckboxModule, MatTooltipModule],
+  template: `
+    <div class="prod-item" [class.selected]="selected()">
+
+      <!-- Thumbnail -->
+      <div class="prod-thumb" (click)="product().img && openLightbox.emit(product().img)">
+        @if (product().img) {
+          <img [src]="product().img" [alt]="product().name" />
+        } @else {
+          <mat-icon>photo_camera</mat-icon>
+        }
+      </div>
+
+      <!-- Info -->
+      <div class="prod-info">
+        <div class="prod-name">{{ product().name }}</div>
+        <div class="prod-meta">
+          <span class="prod-price">{{ product().price | number:'1.2-2' }} zł</span>
+          @if (product().mass) {
+            <span class="prod-mass">· {{ product().mass }} g</span>
+          }
+        </div>
+        @if (product().desc) {
+          <div class="prod-desc">
+            {{ expanded() ? product().desc : (product().desc | slice:0:DESC_LIMIT) }}
+            @if (product().desc.length > DESC_LIMIT) {
+              <button mat-button class="desc-toggle" (click)="expanded.set(!expanded())">
+                {{ expanded() ? 'pokaż mniej ▴' : 'pokaż więcej ▾' }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Actions -->
+      @if (selectMode()) {
+        <mat-checkbox [checked]="selected()" (change)="toggleSelect.emit(product().id)" color="primary" />
+      } @else {
+        <div class="prod-actions">
+          <button mat-icon-button (click)="edit.emit(product())" matTooltip="Edytuj">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="delete.emit(product().id)" matTooltip="Usuń">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      }
+    </div>
+  `,
+  styles: [`
+    .prod-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 16px; border-bottom: 1px solid #f0f0f0;
+      transition: background .15s;
+    }
+    .prod-item.selected { background: #fffbeb; }
+    .prod-thumb {
+      width: 48px; height: 48px; border-radius: 8px; flex-shrink: 0;
+      overflow: hidden; background: #f5f5f5;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .prod-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .prod-info { flex: 1; min-width: 0; }
+    .prod-name { font-weight: 500; font-size: 14px; }
+    .prod-meta { font-size: 12px; color: rgba(0,0,0,.54); margin-top: 2px; }
+    .prod-price { font-weight: 500; color: #1976d2; }
+    .prod-mass { margin-left: 4px; }
+    .prod-desc { font-size: 12px; color: rgba(0,0,0,.6); margin-top: 4px; }
+    .desc-toggle { font-size: 11px; padding: 0; min-width: auto; height: auto; line-height: 1.4; }
+    .prod-actions { display: flex; }
+  `],
+})
+export class ProductItemComponent {
+  product = input.required<Product>();
+  selectMode = input<boolean>(false);
+  selected = input<boolean>(false);
+
+  edit = output<Product>();
+  delete = output<string>();
+  toggleSelect = output<string>();
+  openLightbox = output<string>();
+
+  expanded = signal(false);
+  DESC_LIMIT = DESC_LIMIT;
+}

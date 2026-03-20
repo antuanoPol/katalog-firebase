@@ -4,63 +4,83 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A single-file vanilla JavaScript PWA for managing a product catalog and order profitability calculations, designed for Vinted resellers. UI is in Polish.
+Angular 17 PWA for managing a product catalog and order profitability calculations, designed for Vinted resellers. UI is in Polish. Backend: Firebase (Auth + Firestore). Deployed to Firebase Hosting.
 
-## Deployment
+## Commands
 
-No build step — the app is pure HTML/CSS/JS served directly from the root.
-
-**Deploy to Firebase Hosting:**
 ```bash
-firebase deploy --only hosting
+npm start              # dev server at localhost:4200
+ng serve               # same
+npm run build          # production build → dist/katalog-firebase/browser/
+firebase serve --only hosting   # test production build locally
+firebase deploy --only hosting  # manual deploy
 ```
-
-**Local development:** Open `index.html` directly in a browser, or use any static file server:
-```bash
-npx serve .
-```
-
-Deployment to production is automated via GitHub Actions on push to `main` (requires `FIREBASE_TOKEN` secret).
 
 ## Architecture
 
-The entire application lives in a single file: `index.html` (≈1300 lines). There is no build system, no package manager, no framework.
+**Framework:** Angular 17 standalone components, Angular Material UI, Angular Signals for state.
 
-**Backend:** Firebase (project `vinted-kosztorys`)
-- Auth: Email/password via Firebase Authentication
-- Database: Firestore — all user data stored at `users/{uid}/katalog` as a single document
+**Firebase:** `@angular/fire@17` (modular API via `importProvidersFrom` in `app.config.ts`).
 
-**Data shape stored in Firestore:**
+**Firestore:** All user data stored as a single document at `users/{uid}/katalog`:
 ```
-{
-  categories: [{ id, name, collapsed }],
-  products:   [{ id, catId, name, price, mass, img, link, desc }],
-  orders:     [{ id, name, color, delivery, otherFees, items: [{ prodId, sellPrice }] }]
-}
+{ categories: [...], products: [...], orders: [...] }
 ```
 
-**State management:** One global `state` object in memory, mirrored to Firestore via a debounced `saveData()` (800ms). On login, data is loaded from Firestore and cached in `localStorage` for offline use.
+**State management:** `DataService` holds three `signal<>` arrays (`categories`, `products`, `orders`). Every mutation calls the private `mutate()` helper which: (1) applies the change, (2) writes to `localStorage` synchronously, (3) fires a debounced (800ms) Firestore write via an RxJS `Subject`.
 
-**Views (tabs):** Catalog → Orders → Panel (analytics). Switching tabs calls `switchView()` and re-renders the active view.
+## Key Files
 
-**Service Worker** (`sw.js`): Cache-first strategy, cache name `katalog-v2`. Caches HTML, manifest, and icons. Excludes API calls.
-
-## Key Functions in index.html
-
-| Function | Purpose |
+| File | Purpose |
 |---|---|
-| `loadData()` / `saveData()` | Firestore read/write (saveData is debounced 800ms) |
-| `renderCatalog()` | Renders all products grouped by category |
-| `renderOrder()` | Renders order with profit breakdown |
-| `renderPanel()` | Renders analytics/statistics table |
-| `saveProd()` / `deleteProd()` | CRUD for products |
-| `saveCat()` / `deleteCat()` | CRUD for categories |
-| `saveOrder()` | Create order from selected products |
-| `doExportJson()` / `doImportJson()` | JSON backup/restore |
-| `doExportXlsx()` | Excel export (loads XLSX library on demand) |
-| `uid()` | UUID generator; `x()` HTML escape; `fmt()` number formatter |
-| `notify()` | Toast notification |
+| [src/app/app.config.ts](src/app/app.config.ts) | Root providers: router, Firebase, Material animations, service worker |
+| [src/app/app.routes.ts](src/app/app.routes.ts) | Routes: `/catalog`, `/orders`, `/panel`, `/login` — all lazy-loaded |
+| [src/app/core/models/catalog.models.ts](src/app/core/models/catalog.models.ts) | TypeScript interfaces: `Category`, `Product`, `Order`, `OrderRowCalc` |
+| [src/app/core/services/data.service.ts](src/app/core/services/data.service.ts) | Central state + Firestore sync + import/export |
+| [src/app/core/services/auth.service.ts](src/app/core/services/auth.service.ts) | Firebase Auth, signals: `user`, `authMode`, `authError`, `isLoading` |
+| [src/app/core/services/notification.service.ts](src/app/core/services/notification.service.ts) | `MatSnackBar` wrapper |
+| [src/app/core/services/image.service.ts](src/app/core/services/image.service.ts) | Canvas resize → base64 JPEG |
+| [src/app/core/guards/auth.guard.ts](src/app/core/guards/auth.guard.ts) | Redirects unauthenticated users to `/login` |
+| [src/environments/environment.ts](src/environments/environment.ts) | Firebase config (production) |
 
-## Firebase Config
+## Component Tree
 
-The Firebase config (API key, project ID, etc.) is hardcoded in `index.html`. The Firebase API key for web clients is intentionally public — security is enforced via Firestore Security Rules in the Firebase console, not by keeping the key secret.
+```
+AppComponent
+├── TopbarComponent          (MatToolbar, user menu, sync dot, import/export)
+├── TabBarComponent          (3 tabs with product/order count badges)
+└── RouterOutlet
+    ├── AuthComponent         (/login — ReactiveForm email+password)
+    ├── CatalogComponent      (/catalog)
+    │   ├── CategoryGroupComponent  (collapsible, colored header)
+    │   │   └── ProductItemComponent
+    │   └── opens via MatDialog:
+    │       ├── CategoryModalComponent
+    │       ├── ProductModalComponent  (image upload via ImageService)
+    │       └── OrderModalComponent
+    ├── OrdersComponent       (/orders — MatSelect + delete button)
+    │   └── OrderDetailComponent  (MatTable, fee inputs, profit calc)
+    └── PanelComponent        (/panel — MatTable aggregated stats)
+```
+
+## Profit Calculation Logic (OrderDetailComponent)
+
+For each product in an order:
+```
+deliveryShare  = order.delivery × (product.mass / totalOrderMass)
+otherFeesShare = order.otherFees / itemCount
+totalCost      = product.price + deliveryShare + otherFeesShare
+profit         = sellPrice - totalCost  (null if sellPrice === 0)
+```
+
+## PWA
+
+`ng add @angular/pwa` generated `ngsw-worker.js` (replaces old `sw.js`). Config in `ngsw-config.json`. Firebase Firestore URLs excluded from cache (strategy: freshness).
+
+## Deployment
+
+Firebase Hosting serves `dist/katalog-firebase/browser/`. GitHub Actions (`.github/workflows/deploy.yml`) runs `npm ci && npm run build` before deploy on every push to `main`.
+
+## AngularFire Note
+
+`@angular/fire@17` returns `ModuleWithProviders` from its provide functions, so they must be wrapped with `importProvidersFrom()` in `app.config.ts` — not used directly in the `providers` array.
