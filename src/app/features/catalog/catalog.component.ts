@@ -112,6 +112,11 @@ import { Product } from '../../core/models/catalog.models';
     }
 
     <!-- Uncategorized products — displayed individually without a group header -->
+    @if (uncategorizedProducts().length > 0) {
+      <div class="uncat-divider">
+        <span class="uncat-label">Bez kategorii · {{ uncategorizedProducts().length }}</span>
+      </div>
+    }
     @for (product of uncategorizedProducts(); track product.id) {
       <app-product-item
         [product]="product"
@@ -169,9 +174,22 @@ import { Product } from '../../core/models/catalog.models';
       justify-content: flex-end; flex-wrap: wrap;
     }
     .prod-count-chip {
-      font-size: 11px; font-weight: 700; color: var(--primary);
-      background: var(--primary-glow); border: 1px solid var(--border-amber);
+      font-size: 11px; font-weight: 700;
+      color: #10b981;
+      background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.35);
       padding: 4px 10px; border-radius: 20px; letter-spacing: .04em;
+      white-space: nowrap;
+    }
+    .uncat-divider {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; border-top: 1px solid var(--border);
+    }
+    .uncat-divider::before, .uncat-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .uncat-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--text-muted);
       white-space: nowrap;
     }
     .select-toolbar { display: flex; align-items: center; gap: 8px; flex: 1; flex-wrap: wrap; }

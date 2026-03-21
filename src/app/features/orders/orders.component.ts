@@ -93,8 +93,9 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/c
       letter-spacing: .1em; color: var(--text-muted);
     }
     .order-count-chip {
-      font-size: 11px; font-weight: 700; color: var(--primary);
-      background: var(--primary-glow); border: 1px solid var(--border-amber);
+      font-size: 11px; font-weight: 700;
+      color: #f59e0b;
+      background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.35);
       padding: 2px 9px; border-radius: 20px; letter-spacing: .04em;
     }
     .orders-controls {
