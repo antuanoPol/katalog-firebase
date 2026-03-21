@@ -26,9 +26,6 @@ import { Product } from '../../core/models/catalog.models';
         <button class="tool-btn primary" (click)="openProductModal(null, '')">
           <mat-icon>add</mat-icon> Produkt
         </button>
-        @if (data.products().length > 0) {
-          <span class="prod-count-chip">{{ data.products().length }}</span>
-        }
         <button class="tool-btn ghost" (click)="openCategoryModal()">
           <mat-icon>create_new_folder</mat-icon> Kategoria
         </button>
@@ -37,28 +34,32 @@ import { Product } from '../../core/models/catalog.models';
             <mat-icon>check_box</mat-icon> Do paczki
           </button>
         }
-        <!-- Search -->
-        <div class="search-box">
-          <mat-icon class="search-icon">search</mat-icon>
-          <input class="search-input" [(ngModel)]="searchQuery"
-            placeholder="Szukaj produktu..." />
-          @if (searchQuery) {
-            <button class="search-clear" (click)="searchQuery = ''">
-              <mat-icon>close</mat-icon>
+        <!-- Search + Sort + Count (right-aligned group) -->
+        <div class="toolbar-right">
+          <div class="search-box">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input class="search-input" [(ngModel)]="searchQuery"
+              placeholder="Szukaj produktu..." />
+            @if (searchQuery) {
+              <button class="search-clear" (click)="searchQuery = ''">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </div>
+          <div class="sort-group">
+            <button class="sort-btn" [class.active]="sortField === 'name'" (click)="setSort('name')">
+              Nazwa {{ sortField === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
             </button>
+            <button class="sort-btn" [class.active]="sortField === 'price'" (click)="setSort('price')">
+              Cena {{ sortField === 'price' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+            </button>
+            <button class="sort-btn" [class.active]="sortField === 'mass'" (click)="setSort('mass')">
+              Masa {{ sortField === 'mass' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+            </button>
+          </div>
+          @if (data.products().length > 0) {
+            <span class="prod-count-chip">{{ data.products().length }} szt.</span>
           }
-        </div>
-        <!-- Sort -->
-        <div class="sort-group">
-          <button class="sort-btn" [class.active]="sortField === 'name'" (click)="setSort('name')">
-            Nazwa {{ sortField === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
-          </button>
-          <button class="sort-btn" [class.active]="sortField === 'price'" (click)="setSort('price')">
-            Cena {{ sortField === 'price' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
-          </button>
-          <button class="sort-btn" [class.active]="sortField === 'mass'" (click)="setSort('mass')">
-            Masa {{ sortField === 'mass' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
-          </button>
         </div>
       } @else {
         <div class="select-toolbar">
@@ -168,10 +169,15 @@ import { Product } from '../../core/models/catalog.models';
       border: 1px solid var(--border-amber);
     }
     .tool-btn.amber:hover { background: rgba(255,193,7,.18); }
+    .toolbar-right {
+      display: flex; align-items: center; gap: 6px; flex: 1;
+      justify-content: flex-end; flex-wrap: wrap;
+    }
     .prod-count-chip {
-      font-size: 11px; font-weight: 700; color: var(--text-muted);
-      background: var(--surface-2); border: 1px solid var(--border);
-      padding: 3px 9px; border-radius: 20px; letter-spacing: .04em;
+      font-size: 11px; font-weight: 700; color: var(--primary);
+      background: var(--primary-glow); border: 1px solid var(--border-amber);
+      padding: 4px 10px; border-radius: 20px; letter-spacing: .04em;
+      white-space: nowrap;
     }
     .select-toolbar { display: flex; align-items: center; gap: 8px; flex: 1; flex-wrap: wrap; }
     .select-badge {
