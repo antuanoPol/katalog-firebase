@@ -16,6 +16,12 @@ import { DataService } from '../../../core/services/data.service';
         </div>
         <span class="nav-label">Katalog</span>
       </a>
+      <a routerLink="/search" routerLinkActive="active" class="nav-item">
+        <div class="nav-icon-wrap">
+          <mat-icon>image_search</mat-icon>
+        </div>
+        <span class="nav-label">Wyszukaj</span>
+      </a>
       <a routerLink="/orders" routerLinkActive="active" class="nav-item">
         <div class="nav-icon-wrap">
           <mat-icon [matBadge]="data.orderCount() || null" matBadgeSize="small">local_shipping</mat-icon>
