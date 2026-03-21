@@ -91,11 +91,11 @@ export interface ProductModalData {
         <div class="row-2">
           <mat-form-field appearance="outline">
             <mat-label>Cena (zł)</mat-label>
-            <input matInput type="number" formControlName="price" placeholder="0.00" />
+            <input matInput type="number" formControlName="price" placeholder="0.00" (focus)="$any($event.target).select()" />
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Masa (g)</mat-label>
-            <input matInput type="number" formControlName="mass" placeholder="0" />
+            <input matInput type="number" formControlName="mass" placeholder="0" (focus)="$any($event.target).select()" />
           </mat-form-field>
         </div>
 

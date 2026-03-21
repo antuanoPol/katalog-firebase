@@ -38,12 +38,14 @@ import { DataService } from '../../../core/services/data.service';
           <mat-label>Dostawa (zł)</mat-label>
           <mat-icon matPrefix>flight</mat-icon>
           <input matInput type="number" [value]="order().delivery"
+            (focus)="$any($event.target).select()"
             (change)="data.updateOrderFee(order().id, 'delivery', +$any($event.target).value)" />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Inne opłaty (zł)</mat-label>
           <mat-icon matPrefix>receipt</mat-icon>
           <input matInput type="number" [value]="order().otherFees"
+            (focus)="$any($event.target).select()"
             (change)="data.updateOrderFee(order().id, 'otherFees', +$any($event.target).value)" />
         </mat-form-field>
       </div>
@@ -114,6 +116,7 @@ import { DataService } from '../../../core/services/data.service';
               <mat-form-field appearance="outline" class="sell-field">
                 <input matInput type="number" [value]="r.item.sellPrice || ''"
                   placeholder="0.00"
+                  (focus)="$any($event.target).select()"
                   (change)="data.updateSellPrice(order().id, r.product.id, +$any($event.target).value)" />
               </mat-form-field>
             </td>
