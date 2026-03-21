@@ -1,12 +1,10 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Product } from '../../../core/models/catalog.models';
-
-const DESC_LIMIT = 80;
 
 @Component({
   selector: 'app-product-item',
@@ -34,14 +32,7 @@ const DESC_LIMIT = 80;
           }
         </div>
         @if (product().desc) {
-          <div class="prod-desc">
-            {{ expanded() ? product().desc : (product().desc | slice:0:DESC_LIMIT) }}
-            @if (product().desc.length > DESC_LIMIT) {
-              <button mat-button class="desc-toggle" (click)="expanded.set(!expanded())">
-                {{ expanded() ? 'pokaż mniej ▴' : 'pokaż więcej ▾' }}
-              </button>
-            }
-          </div>
+          <div class="prod-desc">{{ product().desc }}</div>
         }
       </div>
 
@@ -78,8 +69,10 @@ const DESC_LIMIT = 80;
     .prod-meta { font-size: 12px; color: rgba(0,0,0,.54); margin-top: 2px; }
     .prod-price { font-weight: 500; color: #1976d2; }
     .prod-mass { margin-left: 4px; }
-    .prod-desc { font-size: 12px; color: rgba(0,0,0,.6); margin-top: 4px; }
-    .desc-toggle { font-size: 11px; padding: 0; min-width: auto; height: auto; line-height: 1.4; }
+    .prod-desc {
+      font-size: 12px; color: rgba(0,0,0,.6); margin-top: 4px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
     .prod-actions { display: flex; }
   `],
 })
@@ -92,7 +85,4 @@ export class ProductItemComponent {
   delete = output<string>();
   toggleSelect = output<string>();
   openLightbox = output<string>();
-
-  expanded = signal(false);
-  DESC_LIMIT = DESC_LIMIT;
 }
