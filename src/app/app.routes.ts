@@ -14,11 +14,6 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
-    path: 'search',
-    loadComponent: () => import('./features/search/search.component').then(m => m.SearchComponent),
-    canActivate: [authGuard],
-  },
-  {
     path: 'panel',
     loadComponent: () => import('./features/panel/panel.component').then(m => m.PanelComponent),
     canActivate: [authGuard],
