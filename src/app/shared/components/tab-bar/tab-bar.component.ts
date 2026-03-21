@@ -24,8 +24,8 @@ import { DataService } from '../../../core/services/data.service';
   styles: [`
     .tab-nav {
       display: flex;
-      background: white;
-      border-bottom: 1px solid #e0e0e0;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
       position: sticky;
       top: 64px;
       z-index: 99;
@@ -35,16 +35,21 @@ import { DataService } from '../../../core/services/data.service';
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 8px 4px;
+      padding: 10px 4px;
       text-decoration: none;
-      color: rgba(0,0,0,.54);
+      color: var(--text-muted);
       font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .04em;
       gap: 2px;
-      transition: color .2s;
+      transition: color .2s, background .2s;
+      text-transform: uppercase;
     }
+    .tab-link:hover { color: var(--text); background: var(--bg-hover); }
     .tab-link.active-tab {
-      color: #3f51b5;
-      border-bottom: 2px solid #3f51b5;
+      color: var(--primary);
+      border-bottom: 2px solid var(--primary);
+      background: var(--primary-dim);
     }
   `],
 })

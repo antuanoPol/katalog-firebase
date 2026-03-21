@@ -96,14 +96,14 @@ interface PanelRow {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; padding: 80px 24px; color: rgba(0,0,0,.38);
     }
-    .empty-icon { font-size: 64px; width: 64px; height: 64px; margin-bottom: 16px; opacity: .3; }
+    .empty-icon { font-size: 64px; width: 64px; height: 64px; margin-bottom: 16px; opacity: .2; }
     .panel-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 8px 0; }
-    .panel-title { font-size: 16px; font-weight: 500; }
+    .panel-title { font-size: 16px; font-weight: 700; letter-spacing: .02em; color: var(--text); }
     .panel-card { margin: 16px; }
     .table-wrap { overflow-x: auto; }
-    .total-row { font-weight: 700; background: #f5f5f5; }
-    .profit-pos { color: #059669; font-weight: 600; }
-    .profit-neg { color: #dc2626; font-weight: 600; }
+    .total-row { font-weight: 700; background: var(--primary-dim) !important; color: var(--primary) !important; }
+    .profit-pos { color: var(--success) !important; font-weight: 700; }
+    .profit-neg { color: var(--danger) !important; font-weight: 700; }
   `],
 })
 export class PanelComponent {

@@ -125,18 +125,25 @@ import { DataService } from '../../../core/services/data.service';
     .order-card { margin: 16px; }
     .fee-inputs { display: flex; gap: 12px; padding: 0 16px; flex-wrap: wrap; }
     .fee-inputs mat-form-field { flex: 1; min-width: 140px; }
-    .badge { background: #e8eaf6; color: #3f51b5; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 8px; }
-    .profit-badge { font-size: 13px; font-weight: 600; }
-    .profit-pos { color: #059669; }
-    .profit-neg { color: #dc2626; }
+    .badge {
+      background: var(--primary-dim); color: var(--primary);
+      padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 8px;
+      border: 1px solid var(--border); font-weight: 600;
+    }
+    .profit-badge { font-size: 13px; font-weight: 700; }
+    .profit-pos { color: var(--success); text-shadow: 0 0 8px rgba(16,185,129,.4); }
+    .profit-neg { color: var(--danger); text-shadow: 0 0 8px rgba(244,63,94,.4); }
     .table-wrap { overflow-x: auto; }
     .order-table { width: 100%; }
     .sell-field { width: 90px; }
     ::ng-deep .sell-field .mat-mdc-form-field-infix { padding: 4px 0; }
-    .order-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #e0e0e0; margin-top: 16px; }
-    .stat-cell { background: white; padding: 12px; text-align: center; }
-    .stat-label { font-size: 11px; color: rgba(0,0,0,.54); }
-    .stat-value { font-size: 15px; font-weight: 600; margin-top: 4px; }
+    .order-stats {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border); margin-top: 16px;
+    }
+    .stat-cell { background: var(--bg-surface); padding: 12px; text-align: center; }
+    .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; }
+    .stat-value { font-size: 15px; font-weight: 700; margin-top: 4px; color: var(--text); }
   `],
 })
 export class OrderDetailComponent {

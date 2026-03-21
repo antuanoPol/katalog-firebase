@@ -22,7 +22,7 @@ import { TabBarComponent } from './shared/components/tab-bar/tab-bar.component';
     }
   `,
   styles: [`
-    .app-shell { display: flex; flex-direction: column; height: 100dvh; }
+    .app-shell { display: flex; flex-direction: column; height: 100dvh; background: var(--bg); }
     .content { flex: 1; overflow-y: auto; }
   `],
 })

@@ -48,17 +48,27 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../modals/confirm-
       (change)="onImportFile($event)" />
   `,
   styles: [`
-    mat-toolbar { position: sticky; top: 0; z-index: 100; }
-    .toolbar-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+    mat-toolbar {
+      position: sticky; top: 0; z-index: 100;
+      background: linear-gradient(90deg, #0f0f1e 0%, #16162e 100%) !important;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+    }
+    .toolbar-title {
+      display: flex; align-items: center; gap: 8px; font-weight: 700;
+      font-size: 16px; letter-spacing: 0.02em;
+      background: linear-gradient(90deg, #fff 0%, var(--primary) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
     .spacer { flex: 1; }
     .sync-indicator { display: flex; align-items: center; margin-right: 4px; }
     .sync-icon { font-size: 18px; width: 18px; height: 18px; }
-    .sync-online { color: #4ade80; }
+    .sync-online { color: var(--success); filter: drop-shadow(0 0 4px var(--success)); }
     .sync-syncing { color: #fbbf24; animation: pulse 0.8s infinite alternate; }
-    .sync-offline { color: #f87171; }
-    .menu-email { padding: 8px 16px; font-size: 12px; color: rgba(0,0,0,.54); border-bottom: 1px solid #e0e0e0; }
-    .logout-item { color: #dc2626; }
-    @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
+    .sync-offline { color: var(--danger); }
+    .menu-email { padding: 8px 16px; font-size: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+    .logout-item { color: var(--danger) !important; }
+    @keyframes pulse { from { opacity: 1; } to { opacity: 0.3; } }
   `],
 })
 export class TopbarComponent {
