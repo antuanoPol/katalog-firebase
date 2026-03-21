@@ -35,7 +35,10 @@ import { Product } from '../../core/models/catalog.models';
             <mat-icon>check_box</mat-icon> Do paczki
           </button>
         }
-        <!-- Search + Sort + Count (right-aligned group) -->
+        @if (data.products().length > 0) {
+          <span class="prod-count-chip">{{ data.products().length }} szt.</span>
+        }
+        <!-- Search + Sort (right-aligned group) -->
         <div class="toolbar-right">
           <div class="search-box">
             <mat-icon class="search-icon">search</mat-icon>
@@ -58,9 +61,6 @@ import { Product } from '../../core/models/catalog.models';
               Masa {{ sortField === 'mass' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
             </button>
           </div>
-          @if (data.products().length > 0) {
-            <span class="prod-count-chip">{{ data.products().length }} szt.</span>
-          }
         </div>
       } @else {
         <div class="select-toolbar">
@@ -184,7 +184,10 @@ import { Product } from '../../core/models/catalog.models';
       color: #10b981;
       background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.35);
       padding: 4px 10px; border-radius: 20px; letter-spacing: .04em;
-      white-space: nowrap;
+      white-space: nowrap; margin-left: auto;
+    }
+    @media (max-width: 767px) {
+      .prod-count-chip { margin-left: 0; }
     }
     .uncat-divider {
       display: flex; align-items: center; gap: 10px;
