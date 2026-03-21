@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -16,7 +17,7 @@ import { Product } from '../../core/models/catalog.models';
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, CategoryGroupComponent],
+  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, CategoryGroupComponent],
   template: `
     <!-- Toolbar -->
     <div class="catalog-toolbar">
@@ -32,6 +33,29 @@ import { Product } from '../../core/models/catalog.models';
             <mat-icon>check_box</mat-icon> Do paczki
           </button>
         }
+        <!-- Search -->
+        <div class="search-box">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input class="search-input" [(ngModel)]="searchQuery"
+            placeholder="Szukaj produktu..." />
+          @if (searchQuery) {
+            <button class="search-clear" (click)="searchQuery = ''">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
+        <!-- Sort -->
+        <div class="sort-group">
+          <button class="sort-btn" [class.active]="sortField === 'name'" (click)="setSort('name')">
+            Nazwa {{ sortField === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+          </button>
+          <button class="sort-btn" [class.active]="sortField === 'price'" (click)="setSort('price')">
+            Cena {{ sortField === 'price' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+          </button>
+          <button class="sort-btn" [class.active]="sortField === 'mass'" (click)="setSort('mass')">
+            Masa {{ sortField === 'mass' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+          </button>
+        </div>
       } @else {
         <div class="select-toolbar">
           <span class="select-badge">{{ selectedIds().size }} zaznaczone</span>
@@ -72,6 +96,7 @@ import { Product } from '../../core/models/catalog.models';
         (addProduct)="openProductModal(null, $event)"
         (editProduct)="openProductModal($event, $event.catId)"
         (deleteProduct)="onDeleteProduct($event)"
+        (duplicateProduct)="data.duplicateProduct($event.id)"
         (deleteCategory)="data.deleteCategory($event)"
         (toggleSelect)="toggleSelect($event)"
         (openLightbox)="lightboxSrc.set($event); showLightbox.set(true)"
@@ -122,6 +147,33 @@ import { Product } from '../../core/models/catalog.models';
       background: var(--primary-glow); border: 1px solid var(--border-amber);
       padding: 4px 12px; border-radius: 20px;
     }
+    .search-box {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0 10px; height: 36px;
+      flex: 1; min-width: 160px; max-width: 280px;
+      transition: border-color .2s;
+    }
+    .search-box:focus-within { border-color: var(--border-amber); }
+    .search-icon { font-size: 16px; width: 16px; height: 16px; color: var(--text-muted); }
+    .search-input {
+      flex: 1; background: none; border: none; outline: none;
+      color: var(--text); font-size: 13px; font-family: inherit;
+    }
+    .search-clear {
+      background: none; border: none; cursor: pointer; padding: 0;
+      display: flex; align-items: center; color: var(--text-muted);
+    }
+    .search-clear mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    .sort-group { display: flex; gap: 4px; }
+    .sort-btn {
+      padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface-2); color: var(--text-muted);
+      font-size: 11px; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: all .2s; letter-spacing: .02em;
+    }
+    .sort-btn.active { border-color: var(--border-amber); color: var(--primary); background: rgba(255,193,7,.08); }
+    .sort-btn:hover { border-color: var(--border-amber); color: var(--primary); }
     .empty-state {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; padding: 80px 24px; gap: 8px;
@@ -158,8 +210,35 @@ export class CatalogComponent {
   lightboxSrc = signal('');
   showLightbox = signal(false);
 
+  searchQuery = '';
+  sortField: 'name' | 'price' | 'mass' = 'name';
+  sortDir: 'asc' | 'desc' = 'asc';
+
+  setSort(field: 'name' | 'price' | 'mass'): void {
+    if (this.sortField === field) {
+      this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDir = 'asc';
+    }
+  }
+
   productsForCat(catId: string) {
-    return this.data.products().filter(p => p.catId === catId);
+    let prods = this.data.products().filter(p => p.catId === catId);
+    if (this.searchQuery) {
+      const q = this.searchQuery.toLowerCase();
+      prods = prods.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.desc?.toLowerCase().includes(q)
+      );
+    }
+    const dir = this.sortDir === 'asc' ? 1 : -1;
+    return [...prods].sort((a, b) => {
+      if (this.sortField === 'name') return dir * a.name.localeCompare(b.name);
+      if (this.sortField === 'price') return dir * (a.price - b.price);
+      if (this.sortField === 'mass') return dir * (a.mass - b.mass);
+      return 0;
+    });
   }
 
   startSelect(): void { this.selectMode.set(true); this.selectedIds.set(new Set()); }

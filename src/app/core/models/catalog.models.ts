@@ -11,6 +11,7 @@ export interface Product {
   price: number;
   mass: number;
   img: string;
+  imgs?: string[];
   link: string;
   desc: string;
 }
@@ -34,10 +35,21 @@ export interface Order {
   items: OrderItem[];
 }
 
+export interface SaleRecord {
+  id: string;
+  productId: string;
+  productName: string;
+  productCost: number;
+  sellPrice: number;
+  date: string; // YYYY-MM-DD
+  platform: string;
+}
+
 export interface AppState {
   categories: Category[];
   products: Product[];
   orders: Order[];
+  sales?: SaleRecord[];
 }
 
 export interface OrderRowCalc {

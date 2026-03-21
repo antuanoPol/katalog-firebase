@@ -14,9 +14,9 @@ import { Product } from '../../../core/models/catalog.models';
     <div class="prod-item" [class.selected]="selected()">
 
       <!-- Thumbnail -->
-      <div class="prod-thumb" (click)="product().img && openLightbox.emit(product().img)">
-        @if (product().img) {
-          <img [src]="product().img" [alt]="product().name" />
+      <div class="prod-thumb" (click)="thumbSrc() && openLightbox.emit(thumbSrc())">
+        @if (thumbSrc()) {
+          <img [src]="thumbSrc()" [alt]="product().name" />
         } @else {
           <mat-icon>photo_camera</mat-icon>
         }
@@ -30,6 +30,9 @@ import { Product } from '../../../core/models/catalog.models';
           @if (product().mass) {
             <span class="prod-mass">· {{ product().mass }} g</span>
           }
+          @if (imgCount() > 1) {
+            <span class="prod-imgs">· {{ imgCount() }} zdjęć</span>
+          }
         </div>
         @if (product().desc) {
           <div class="prod-desc">{{ product().desc | slice:0:50 }}{{ product().desc.length > 50 ? '…' : '' }}</div>
@@ -41,6 +44,9 @@ import { Product } from '../../../core/models/catalog.models';
         <mat-checkbox [checked]="selected()" (change)="toggleSelect.emit(product().id)" color="primary" />
       } @else {
         <div class="prod-actions">
+          <button mat-icon-button (click)="duplicate.emit(product())" matTooltip="Powiel">
+            <mat-icon>content_copy</mat-icon>
+          </button>
           <button mat-icon-button (click)="edit.emit(product())" matTooltip="Edytuj">
             <mat-icon>edit</mat-icon>
           </button>
@@ -78,6 +84,7 @@ import { Product } from '../../../core/models/catalog.models';
     .prod-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
     .prod-price { font-weight: 700; color: var(--primary); }
     .prod-mass { margin-left: 4px; }
+    .prod-imgs { margin-left: 4px; color: var(--primary); }
     .prod-desc { font-size: 11px; color: var(--text-muted); margin-top: 3px; opacity: .7; }
     .prod-actions { display: flex; opacity: 0; transition: opacity .2s; }
     .prod-item:hover .prod-actions { opacity: 1; }
@@ -90,6 +97,17 @@ export class ProductItemComponent {
 
   edit = output<Product>();
   delete = output<string>();
+  duplicate = output<Product>();
   toggleSelect = output<string>();
   openLightbox = output<string>();
+
+  thumbSrc() {
+    const p = this.product();
+    return p.imgs?.[0] ?? p.img ?? '';
+  }
+
+  imgCount() {
+    const p = this.product();
+    return p.imgs?.length ?? (p.img ? 1 : 0);
+  }
 }

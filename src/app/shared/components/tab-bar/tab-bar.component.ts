@@ -22,6 +22,12 @@ import { DataService } from '../../../core/services/data.service';
         </div>
         <span class="nav-label">Zamówienia</span>
       </a>
+      <a routerLink="/history" routerLinkActive="active" class="nav-item">
+        <div class="nav-icon-wrap">
+          <mat-icon [matBadge]="data.sales().length || null" matBadgeSize="small">sell</mat-icon>
+        </div>
+        <span class="nav-label">Sprzedaż</span>
+      </a>
     </nav>
   `,
   styles: [`

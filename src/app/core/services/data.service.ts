@@ -2,7 +2,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { Firestore, doc, getDoc, setDoc } from '@angular/fire/firestore';
 import { Subject } from 'rxjs';
 import { debounceTime, switchMap } from 'rxjs/operators';
-import { Category, Product, Order, AppState, OrderColor } from '../models/catalog.models';
+import { Category, Product, Order, AppState, OrderColor, SaleRecord } from '../models/catalog.models';
 import { NotificationService } from './notification.service';
 
 const COLORS: OrderColor[] = [
@@ -36,6 +36,7 @@ export class DataService {
   readonly categories = signal<Category[]>([]);
   readonly products = signal<Product[]>([]);
   readonly orders = signal<Order[]>([]);
+  readonly sales = signal<SaleRecord[]>([]);
   readonly syncState = signal<'online' | 'syncing' | 'offline'>('online');
 
   readonly productCount = computed(() => this.products().length);
@@ -82,6 +83,7 @@ export class DataService {
     this.categories.set([]);
     this.products.set([]);
     this.orders.set([]);
+    this.sales.set([]);
     this.syncState.set('online');
   }
 
@@ -128,6 +130,18 @@ export class DataService {
     this.mutate(() => this.products.update(prods => prods.filter(p => p.id !== id)));
   }
 
+  duplicateProduct(id: string): void {
+    const original = this.products().find(p => p.id === id);
+    if (!original) return;
+    const copy: Product = { ...original, id: crypto.randomUUID(), name: original.name + ' (kopia)' };
+    this.mutate(() => this.products.update(prods => {
+      const idx = prods.findIndex(p => p.id === id);
+      const next = [...prods];
+      next.splice(idx + 1, 0, copy);
+      return next;
+    }));
+  }
+
   // ── Orders ──────────────────────────────────────────────────────
   addOrder(name: string, productIds: string[]): void {
     const colorIndex = this.orders().length % COLORS.length;
@@ -159,6 +173,17 @@ export class DataService {
 
   deleteOrder(id: string): void {
     this.mutate(() => this.orders.update(orders => orders.filter(o => o.id !== id)));
+  }
+
+  // ── Sales ────────────────────────────────────────────────────────
+  addSale(record: Omit<SaleRecord, 'id'>): void {
+    this.mutate(() => this.sales.update(s => [
+      { ...record, id: crypto.randomUUID() }, ...s
+    ]));
+  }
+
+  deleteSale(id: string): void {
+    this.mutate(() => this.sales.update(s => s.filter(r => r.id !== id)));
   }
 
   // ── Import / Export ─────────────────────────────────────────────
@@ -212,6 +237,7 @@ export class DataService {
     this.categories.set(data.categories ?? []);
     this.products.set(data.products ?? []);
     this.orders.set(data.orders ?? []);
+    this.sales.set(data.sales ?? []);
   }
 
   private snapshot(): AppState {
@@ -219,6 +245,7 @@ export class DataService {
       categories: this.categories(),
       products: this.products(),
       orders: this.orders(),
+      sales: this.sales(),
     };
   }
 

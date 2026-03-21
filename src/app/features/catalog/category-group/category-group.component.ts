@@ -57,6 +57,7 @@ const COLORS = [
             [selected]="selectedIds().has(product.id)"
             (edit)="editProduct.emit($event)"
             (delete)="deleteProduct.emit($event)"
+            (duplicate)="duplicateProduct.emit($event)"
             (toggleSelect)="toggleSelect.emit($event)"
             (openLightbox)="openLightbox.emit($event)"
           />
@@ -105,6 +106,7 @@ export class CategoryGroupComponent {
   addProduct = output<string>();
   editProduct = output<Product>();
   deleteProduct = output<string>();
+  duplicateProduct = output<Product>();
   deleteCategory = output<string>();
   toggleSelect = output<string>();
   openLightbox = output<string>();

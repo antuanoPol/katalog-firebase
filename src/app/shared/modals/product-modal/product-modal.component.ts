@@ -39,27 +39,48 @@ export interface ProductModalData {
           </mat-select>
         </mat-form-field>
 
-        <!-- Image -->
-        <div class="img-section">
-          @if (currentImg()) {
-            <img [src]="currentImg()" class="img-preview" />
-          } @else {
-            <div class="img-placeholder">
-              <mat-icon>photo_camera</mat-icon>
-            </div>
-          }
-          <div class="img-actions">
-            <button mat-stroked-button type="button" (click)="fileInput.click()">
-              <mat-icon>upload</mat-icon> Wybierz zdjęcie
-            </button>
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>lub wklej URL</mat-label>
-              <input matInput formControlName="imgUrl"
-                (blur)="onUrlBlur()" placeholder="https://..." />
-            </mat-form-field>
+        <!-- Images -->
+        <div class="imgs-section">
+          <div class="imgs-label">Zdjęcia ({{ images().length }})</div>
+          <div class="imgs-list">
+            @for (img of images(); track img; let i = $index) {
+              <div class="img-item">
+                <img [src]="img" class="img-thumb" />
+                <div class="img-item-actions">
+                  @if (i > 0) {
+                    <button mat-icon-button type="button" (click)="moveImg(i, -1)" class="img-act-btn">
+                      <mat-icon>arrow_back</mat-icon>
+                    </button>
+                  }
+                  @if (i < images().length - 1) {
+                    <button mat-icon-button type="button" (click)="moveImg(i, 1)" class="img-act-btn">
+                      <mat-icon>arrow_forward</mat-icon>
+                    </button>
+                  }
+                  <button mat-icon-button type="button" (click)="removeImg(i)" class="img-act-btn danger">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+                @if (i === 0) {
+                  <span class="img-main-badge">Główne</span>
+                }
+              </div>
+            }
           </div>
-          <input #fileInput type="file" accept="image/*" style="display:none"
-            (change)="onFileChange($event)" />
+          <div class="imgs-add">
+            <button mat-stroked-button type="button" (click)="fileInput.click()">
+              <mat-icon>add_photo_alternate</mat-icon> Dodaj zdjęcie
+            </button>
+            <div class="url-row">
+              <input class="url-input" #urlInput placeholder="lub wklej URL i zatwierdź →"
+                (keydown.enter)="addFromUrl(urlInput.value); urlInput.value = ''" />
+              <button mat-icon-button type="button" (click)="addFromUrl(urlInput.value); urlInput.value = ''">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+          </div>
+          <input #fileInput type="file" accept="image/*" multiple style="display:none"
+            (change)="onFilesChange($event)" />
         </div>
 
         <mat-form-field appearance="outline" class="full-width">
@@ -101,12 +122,33 @@ export interface ProductModalData {
     .product-form { display: flex; flex-direction: column; gap: 4px; min-width: 300px; }
     .full-width { width: 100%; }
     .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .img-section { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 4px; }
-    .img-preview { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
-    .img-placeholder { width: 80px; height: 80px; border-radius: 8px; background: #f5f5f5;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .img-actions { flex: 1; display: flex; flex-direction: column; gap: 4px; }
     mat-dialog-content { max-height: 70vh; overflow-y: auto; }
+    .imgs-section { margin-bottom: 8px; }
+    .imgs-label { font-size: 12px; color: var(--text-muted, #888); margin-bottom: 6px; font-weight: 600; }
+    .imgs-list { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .img-item { position: relative; }
+    .img-thumb { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid #e0e0e0; display: block; }
+    .img-item-actions {
+      position: absolute; inset: 0; background: rgba(0,0,0,.45);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      gap: 2px; opacity: 0; transition: opacity .2s;
+    }
+    .img-item:hover .img-item-actions { opacity: 1; }
+    .img-act-btn { width: 24px !important; height: 24px !important; line-height: 24px !important; }
+    .img-act-btn mat-icon { font-size: 14px; width: 14px; height: 14px; color: white; }
+    .img-act-btn.danger mat-icon { color: #f87171; }
+    .img-main-badge {
+      position: absolute; bottom: 3px; left: 3px;
+      background: rgba(255,193,7,.9); color: #12121f;
+      font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px;
+    }
+    .imgs-add { display: flex; flex-direction: column; gap: 6px; }
+    .url-row { display: flex; align-items: center; gap: 4px; }
+    .url-input {
+      flex: 1; border: 1px solid #e0e0e0; border-radius: 6px;
+      padding: 6px 10px; font-size: 12px; outline: none;
+    }
+    .url-input:focus { border-color: #7c3aed; }
   `],
 })
 export class ProductModalComponent implements OnInit {
@@ -117,14 +159,13 @@ export class ProductModalComponent implements OnInit {
   private imgService = inject(ImageService);
   private fb = inject(FormBuilder);
 
-  currentImg = signal<string>('');
+  images = signal<string[]>([]);
 
   form = this.fb.group({
     catId: ['', Validators.required],
     name: ['', Validators.required],
     price: [0],
     mass: [0],
-    imgUrl: [''],
     link: [''],
     desc: [''],
   });
@@ -132,11 +173,9 @@ export class ProductModalComponent implements OnInit {
   ngOnInit(): void {
     const p = this.dialogData.product;
     if (p) {
-      this.form.patchValue({
-        catId: p.catId, name: p.name, price: p.price,
-        mass: p.mass, link: p.link, desc: p.desc, imgUrl: '',
-      });
-      if (p.img) this.currentImg.set(p.img);
+      this.form.patchValue({ catId: p.catId, name: p.name, price: p.price, mass: p.mass, link: p.link, desc: p.desc });
+      const existing = p.imgs?.length ? p.imgs : (p.img ? [p.img] : []);
+      this.images.set(existing);
     } else if (this.dialogData.defaultCatId) {
       this.form.patchValue({ catId: this.dialogData.defaultCatId });
     } else if (this.data.categories().length > 0) {
@@ -144,28 +183,44 @@ export class ProductModalComponent implements OnInit {
     }
   }
 
-  async onFileChange(event: Event): Promise<void> {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    const base64 = await this.imgService.resizeAndEncode(file);
-    this.currentImg.set(base64);
+  async onFilesChange(event: Event): Promise<void> {
+    const files = Array.from((event.target as HTMLInputElement).files ?? []);
+    for (const file of files) {
+      const base64 = await this.imgService.resizeAndEncode(file);
+      this.images.update(imgs => [...imgs, base64]);
+    }
+    (event.target as HTMLInputElement).value = '';
   }
 
-  onUrlBlur(): void {
-    const url = this.form.value.imgUrl?.trim();
-    if (url) this.currentImg.set(url);
-    else if (!this.dialogData.product?.img) this.currentImg.set('');
+  addFromUrl(url: string): void {
+    url = url.trim();
+    if (url) this.images.update(imgs => [...imgs, url]);
+  }
+
+  removeImg(index: number): void {
+    this.images.update(imgs => imgs.filter((_, i) => i !== index));
+  }
+
+  moveImg(index: number, dir: -1 | 1): void {
+    this.images.update(imgs => {
+      const next = [...imgs];
+      const target = index + dir;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
   }
 
   onSave(): void {
     if (this.form.invalid) return;
     const v = this.form.value;
+    const imgs = this.images();
     const productData = {
       catId: v.catId!,
       name: v.name!.trim(),
       price: Number(v.price) || 0,
       mass: Number(v.mass) || 0,
-      img: this.currentImg(),
+      img: imgs[0] ?? '',
+      imgs,
       link: v.link?.trim() ?? '',
       desc: v.desc?.trim() ?? '',
     };
