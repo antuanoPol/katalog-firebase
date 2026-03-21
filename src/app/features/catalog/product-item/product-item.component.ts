@@ -32,7 +32,7 @@ import { Product } from '../../../core/models/catalog.models';
           }
         </div>
         @if (product().desc) {
-          <div class="prod-desc">{{ product().desc | slice:0:100 }}{{ product().desc.length > 100 ? '…' : '' }}</div>
+          <div class="prod-desc">{{ product().desc | slice:0:50 }}{{ product().desc.length > 50 ? '…' : '' }}</div>
         }
       </div>
 
