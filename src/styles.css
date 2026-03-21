@@ -30,7 +30,7 @@
 
 /* ── LIGHT theme tokens ──────────────────────────────────── */
 [data-theme="light"] {
-  --bg:               #f5f7fa;
+  --bg:               #fafafa;
   --surface:          #ffffff;
   --surface-2:        #f0f2f6;
   --surface-3:        #e4e8f0;

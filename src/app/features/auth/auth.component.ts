@@ -94,9 +94,10 @@ import { AuthService } from '../../core/services/auth.service';
       width: 64px; height: 64px; border-radius: 18px;
       background: var(--primary); margin: 0 auto 16px;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 32px rgba(255,193,7,.4);
+      box-shadow: 0 0 32px var(--primary-glow-lg);
     }
     .auth-logo mat-icon { font-size: 32px; width: 32px; height: 32px; color: #12121f; }
+    :host-context([data-theme="light"]) .auth-logo mat-icon { color: white; }
     .auth-title { margin: 0 0 6px; font-size: 22px; font-weight: 700; color: var(--text); }
     .auth-subtitle { margin: 0; font-size: 13px; color: var(--text-muted); }
     .auth-tabs {
@@ -112,8 +113,9 @@ import { AuthService } from '../../core/services/auth.service';
     }
     .auth-tab.active {
       background: var(--primary); color: #12121f;
-      box-shadow: 0 0 16px rgba(255,193,7,.35);
+      box-shadow: 0 0 16px var(--primary-glow-lg);
     }
+    :host-context([data-theme="light"]) .auth-tab.active { color: white; box-shadow: var(--shadow-primary); }
     .auth-form { display: flex; flex-direction: column; gap: 4px; }
     .full-width { width: 100%; }
     .auth-error {

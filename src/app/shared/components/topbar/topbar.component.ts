@@ -30,7 +30,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../modals/confirm-
         <!-- Theme toggle -->
         <button class="icon-btn" (click)="theme.toggle()"
           [title]="theme.theme() === 'dark' ? 'Tryb jasny' : 'Tryb ciemny'">
-          <mat-icon>{{ theme.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+          <mat-icon>{{ theme.theme() === 'dark' ? 'dark_mode' : 'light_mode' }}</mat-icon>
         </button>
 
         <button class="avatar-btn" [matMenuTriggerFor]="userMenu">
@@ -111,6 +111,41 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../modals/confirm-
     .menu-email { padding: 10px 16px 8px; font-size: 11px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
     .logout-item { color: var(--danger) !important; }
     .logout-item mat-icon { color: var(--danger) !important; }
+
+    /* ── Light theme overrides ───────────────────────── */
+    :host-context([data-theme="light"]) .topbar {
+      background: #3f51b5;
+      border-bottom: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    }
+    :host-context([data-theme="light"]) .brand-name { color: white; }
+    :host-context([data-theme="light"]) .brand-icon {
+      background: rgba(255,255,255,.2);
+      box-shadow: none;
+    }
+    :host-context([data-theme="light"]) .brand-icon mat-icon { color: white; }
+    :host-context([data-theme="light"]) .sync-dot {
+      background: rgba(255,255,255,.15);
+      border-color: rgba(255,255,255,.3) !important;
+    }
+    :host-context([data-theme="light"]) .sync-dot .sync-icon { color: rgba(255,255,255,.9) !important; }
+    :host-context([data-theme="light"]) .sync-online .sync-icon { color: #a5f3c0 !important; }
+    :host-context([data-theme="light"]) .sync-offline .sync-icon { color: #fca5a5 !important; }
+    :host-context([data-theme="light"]) .icon-btn {
+      color: rgba(255,255,255,.85);
+      border-color: rgba(255,255,255,.3);
+      background: rgba(255,255,255,.1);
+    }
+    :host-context([data-theme="light"]) .icon-btn:hover {
+      color: white;
+      background: rgba(255,255,255,.22);
+      border-color: rgba(255,255,255,.55);
+    }
+    :host-context([data-theme="light"]) .avatar-btn {
+      border-color: rgba(255,255,255,.7);
+      background: rgba(255,255,255,.15);
+    }
+    :host-context([data-theme="light"]) .avatar-letter { color: white; }
   `],
 })
 export class TopbarComponent {
