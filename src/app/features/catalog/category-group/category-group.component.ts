@@ -9,11 +9,16 @@ import { ProductItemComponent } from '../product-item/product-item.component';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/modals/confirm-dialog/confirm-dialog.component';
 
 const COLORS = [
-  { fg: '#4338ca', bg: '#eef2ff' }, { fg: '#0d9488', bg: '#f0fdfa' },
-  { fg: '#d97706', bg: '#fffbeb' }, { fg: '#dc2626', bg: '#fef2f2' },
-  { fg: '#059669', bg: '#ecfdf5' }, { fg: '#7c3aed', bg: '#f5f3ff' },
-  { fg: '#db2777', bg: '#fdf2f8' }, { fg: '#2563eb', bg: '#eff6ff' },
-  { fg: '#b45309', bg: '#fefce8' }, { fg: '#0891b2', bg: '#ecfeff' },
+  { fg: '#ffc107', bg: 'rgba(255,193,7,.12)',   border: 'rgba(255,193,7,.3)'   },
+  { fg: '#ff6b35', bg: 'rgba(255,107,53,.1)',   border: 'rgba(255,107,53,.3)'  },
+  { fg: '#4ade80', bg: 'rgba(74,222,128,.1)',   border: 'rgba(74,222,128,.3)'  },
+  { fg: '#38bdf8', bg: 'rgba(56,189,248,.1)',   border: 'rgba(56,189,248,.3)'  },
+  { fg: '#e879f9', bg: 'rgba(232,121,249,.1)',  border: 'rgba(232,121,249,.3)' },
+  { fg: '#f43f5e', bg: 'rgba(244,63,94,.1)',    border: 'rgba(244,63,94,.3)'   },
+  { fg: '#a78bfa', bg: 'rgba(167,139,250,.1)',  border: 'rgba(167,139,250,.3)' },
+  { fg: '#34d399', bg: 'rgba(52,211,153,.1)',   border: 'rgba(52,211,153,.3)'  },
+  { fg: '#fb923c', bg: 'rgba(251,146,60,.1)',   border: 'rgba(251,146,60,.3)'  },
+  { fg: '#2dd4bf', bg: 'rgba(45,212,191,.1)',   border: 'rgba(45,212,191,.3)'  },
 ];
 
 @Component({
@@ -23,20 +28,21 @@ const COLORS = [
   template: `
     <div class="cat-group">
       <!-- Header -->
-      <div class="cat-header" [style.background]="color().bg" [style.color]="color().fg">
-        <button mat-icon-button (click)="toggleCollapse.emit(category().id)"
-          [style.color]="color().fg" class="collapse-btn">
+      <div class="cat-header" [style.border-left-color]="color().fg">
+        <button class="collapse-btn" (click)="toggleCollapse.emit(category().id)"
+          [style.color]="color().fg">
           <mat-icon>{{ category().collapsed ? 'expand_more' : 'expand_less' }}</mat-icon>
         </button>
-        <span class="cat-name">{{ category().name }}</span>
-        <span class="cat-count">{{ products().length }}</span>
+        <span class="cat-name" [style.color]="color().fg">{{ category().name }}</span>
+        <span class="cat-count" [style.background]="color().bg" [style.color]="color().fg"
+          [style.border-color]="color().border">{{ products().length }}</span>
         <div class="cat-actions">
-          <button mat-icon-button [style.color]="color().fg"
-            (click)="addProduct.emit(category().id)" matTooltip="Dodaj produkt">
+          <button mat-icon-button (click)="addProduct.emit(category().id)" matTooltip="Dodaj produkt"
+            [style.color]="color().fg">
             <mat-icon>add</mat-icon>
           </button>
-          <button mat-icon-button [style.color]="color().fg"
-            (click)="onDelete()" matTooltip="Usuń kategorię">
+          <button mat-icon-button (click)="onDelete()" matTooltip="Usuń kategorię"
+            [style.color]="color().fg">
             <mat-icon>delete</mat-icon>
           </button>
         </div>
@@ -56,25 +62,36 @@ const COLORS = [
           />
         }
         @if (products().length === 0) {
-          <div class="empty-cat">Pusta kategoria — dodaj produkt</div>
+          <div class="empty-cat">Pusta kategoria — kliknij + aby dodać produkt</div>
         }
       }
     </div>
   `,
   styles: [`
-    .cat-group { border-bottom: 2px solid #e0e0e0; }
+    .cat-group { border-bottom: 1px solid var(--border); }
     .cat-header {
-      display: flex; align-items: center; padding: 4px 8px 4px 4px;
-      position: sticky; top: 61px; z-index: 10;
+      display: flex; align-items: center; padding: 8px 12px 8px 0;
+      position: sticky; top: 61px; z-index: 8;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      border-left: 3px solid transparent;
+      transition: background .2s;
     }
-    .cat-name { font-weight: 600; font-size: 14px; flex: 1; }
+    .cat-header:hover { background: var(--surface-2); }
+    .collapse-btn {
+      background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; padding: 4px 8px;
+      border-radius: 6px; transition: background .2s;
+    }
+    .collapse-btn:hover { background: rgba(255,255,255,.05); }
+    .collapse-btn mat-icon { font-size: 18px; width: 18px; height: 18px; }
+    .cat-name { font-weight: 700; font-size: 11px; flex: 1; letter-spacing: .08em; text-transform: uppercase; }
     .cat-count {
-      font-size: 11px; background: rgba(0,0,0,.12); border-radius: 10px;
-      padding: 1px 7px; margin-right: 4px;
+      font-size: 10px; border-radius: 20px; border: 1px solid;
+      padding: 2px 8px; margin-right: 4px; font-weight: 700; letter-spacing: .04em;
     }
     .cat-actions { display: flex; }
-    .collapse-btn { flex-shrink: 0; }
-    .empty-cat { padding: 12px 16px; font-size: 13px; color: rgba(0,0,0,.38); font-style: italic; }
+    .empty-cat { padding: 14px 16px; font-size: 12px; color: var(--text-muted); font-style: italic; }
   `],
 })
 export class CategoryGroupComponent {

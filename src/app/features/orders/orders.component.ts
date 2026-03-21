@@ -21,8 +21,11 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/c
   template: `
     @if (data.orders().length === 0) {
       <div class="empty-state">
-        <mat-icon class="empty-icon">local_shipping</mat-icon>
-        <p>Brak zamówień. Wróć do katalogu i kliknij "Do paczki".</p>
+        <div class="empty-icon-wrap">
+          <mat-icon>local_shipping</mat-icon>
+        </div>
+        <p class="empty-title">Brak zamówień</p>
+        <p class="empty-sub">Wróć do katalogu i kliknij "Do paczki"</p>
       </div>
     } @else {
       <div class="orders-header">
@@ -30,18 +33,22 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/c
           <mat-label>Wybierz zamówienie</mat-label>
           <mat-select [value]="selectedOrderId()" (valueChange)="selectedOrderId.set($event)">
             @for (order of data.orders(); track order.id) {
-              <mat-option [value]="order.id">{{ order.name }} ({{ order.items.length }})</mat-option>
+              <mat-option [value]="order.id">
+                {{ order.name }} <span class="opt-count">({{ order.items.length }})</span>
+              </mat-option>
             }
           </mat-select>
         </mat-form-field>
-        @if (selectedOrderId()) {
-          <button mat-icon-button color="warn" (click)="onDelete()" title="Usuń zamówienie">
-            <mat-icon>delete</mat-icon>
+        <div class="header-actions">
+          @if (selectedOrderId()) {
+            <button mat-icon-button (click)="onDelete()" title="Usuń zamówienie" class="btn-danger">
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
+          <button mat-icon-button routerLink="/panel" title="Panel statystyk" class="btn-panel">
+            <mat-icon>bar_chart</mat-icon>
           </button>
-        }
-        <button mat-icon-button routerLink="/panel" title="Panel statystyk">
-          <mat-icon>bar_chart</mat-icon>
-        </button>
+        </div>
       </div>
 
       @if (selectedOrder()) {
@@ -52,14 +59,26 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/c
   styles: [`
     .empty-state {
       display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 80px 24px; color: rgba(0,0,0,.38);
+      justify-content: center; padding: 80px 24px; gap: 8px;
+      animation: fadeIn .5s ease;
     }
-    .empty-icon { font-size: 64px; width: 64px; height: 64px; margin-bottom: 16px; opacity: .3; }
+    .empty-icon-wrap {
+      width: 80px; height: 80px; border-radius: 24px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 8px;
+    }
+    .empty-icon-wrap mat-icon { font-size: 36px; width: 36px; height: 36px; color: var(--text-muted); }
+    .empty-title { margin: 0; font-size: 18px; font-weight: 700; color: var(--text); }
+    .empty-sub { margin: 0; font-size: 13px; color: var(--text-muted); text-align: center; }
     .orders-header {
       display: flex; align-items: center; gap: 8px;
       padding: 16px 16px 0;
     }
     .order-select { flex: 1; }
+    .header-actions { display: flex; align-items: center; }
+    .btn-danger { color: var(--danger) !important; }
+    .btn-panel { color: var(--primary) !important; }
+    .opt-count { color: var(--text-muted); font-size: 11px; }
   `],
 })
 export class OrdersComponent {

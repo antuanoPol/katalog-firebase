@@ -18,26 +18,31 @@ import { DataService } from '../../../core/services/data.service';
     MatTableModule, MatIconModule, MatButtonModule,
   ],
   template: `
-    <mat-card class="order-card">
-      <mat-card-header>
-        <mat-card-title [style.color]="order().color.fg">{{ order().name }}</mat-card-title>
-        <mat-card-subtitle>
-          <span class="badge">{{ order().items.length }} produktów</span>
-          <span class="profit-badge" [class.profit-pos]="totalProfit() >= 0" [class.profit-neg]="totalProfit() < 0">
-            Zysk: {{ totalProfit() | number:'1.2-2' }} zł
-          </span>
-        </mat-card-subtitle>
-      </mat-card-header>
+    <div class="order-card">
+      <!-- Header -->
+      <div class="order-header">
+        <div class="order-title-row">
+          <div class="order-dot" [style.background]="order().color.fg"></div>
+          <span class="order-name">{{ order().name }}</span>
+          <span class="order-badge">{{ order().items.length }} produktów</span>
+        </div>
+        <div class="profit-chip" [class.positive]="totalProfit() >= 0" [class.negative]="totalProfit() < 0">
+          <mat-icon>trending_{{ totalProfit() >= 0 ? 'up' : 'down' }}</mat-icon>
+          Zysk: {{ totalProfit() | number:'1.2-2' }} zł
+        </div>
+      </div>
 
       <!-- Fee inputs -->
       <div class="fee-inputs">
         <mat-form-field appearance="outline">
-          <mat-label>✈ Dostawa (zł)</mat-label>
+          <mat-label>Dostawa (zł)</mat-label>
+          <mat-icon matPrefix>flight</mat-icon>
           <input matInput type="number" [value]="order().delivery"
             (change)="data.updateOrderFee(order().id, 'delivery', +$any($event.target).value)" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>📋 Inne opłaty (zł)</mat-label>
+          <mat-label>Inne opłaty (zł)</mat-label>
+          <mat-icon matPrefix>receipt</mat-icon>
           <input matInput type="number" [value]="order().otherFees"
             (change)="data.updateOrderFee(order().id, 'otherFees', +$any($event.target).value)" />
         </mat-form-field>
@@ -56,7 +61,7 @@ import { DataService } from '../../../core/services/data.service';
           </ng-container>
           <ng-container matColumnDef="price">
             <th mat-header-cell *matHeaderCellDef>Cena</th>
-            <td mat-cell *matCellDef="let r">{{ r.product.price | number:'1.2-2' }}</td>
+            <td mat-cell *matCellDef="let r" class="price-cell">{{ r.product.price | number:'1.2-2' }}</td>
           </ng-container>
           <ng-container matColumnDef="mass">
             <th mat-header-cell *matHeaderCellDef>Masa</th>
@@ -75,7 +80,7 @@ import { DataService } from '../../../core/services/data.service';
             <td mat-cell *matCellDef="let r">{{ r.totalCost | number:'1.2-2' }}</td>
           </ng-container>
           <ng-container matColumnDef="sell">
-            <th mat-header-cell *matHeaderCellDef>Sprzedaż 🟢</th>
+            <th mat-header-cell *matHeaderCellDef>Sprzedaż</th>
             <td mat-cell *matCellDef="let r">
               <mat-form-field appearance="outline" class="sell-field">
                 <input matInput type="number" [value]="r.item.sellPrice || ''"
@@ -102,41 +107,59 @@ import { DataService } from '../../../core/services/data.service';
       <div class="order-stats">
         <div class="stat-cell">
           <div class="stat-label">Zakupy</div>
-          <div class="stat-value">{{ totalBuy() | number:'1.2-2' }} zł</div>
+          <div class="stat-value">{{ totalBuy() | number:'1.2-2' }} <span class="stat-currency">zł</span></div>
         </div>
         <div class="stat-cell">
           <div class="stat-label">Koszt całkowity</div>
-          <div class="stat-value">{{ totalCost() | number:'1.2-2' }} zł</div>
+          <div class="stat-value">{{ totalCost() | number:'1.2-2' }} <span class="stat-currency">zł</span></div>
         </div>
         <div class="stat-cell">
           <div class="stat-label">Przychód</div>
-          <div class="stat-value">{{ totalRevenue() | number:'1.2-2' }} zł</div>
+          <div class="stat-value">{{ totalRevenue() | number:'1.2-2' }} <span class="stat-currency">zł</span></div>
         </div>
-        <div class="stat-cell">
+        <div class="stat-cell highlight">
           <div class="stat-label">ZYSK</div>
           <div class="stat-value" [class.profit-pos]="totalProfit() >= 0" [class.profit-neg]="totalProfit() < 0">
-            {{ totalProfit() | number:'1.2-2' }} zł
+            {{ totalProfit() | number:'1.2-2' }} <span class="stat-currency">zł</span>
           </div>
         </div>
       </div>
-    </mat-card>
+    </div>
   `,
   styles: [`
-    .order-card { margin: 16px; }
-    .fee-inputs { display: flex; gap: 12px; padding: 0 16px; flex-wrap: wrap; }
+    .order-card { margin: 16px; border-radius: var(--radius); overflow: hidden; background: var(--surface); border: 1px solid var(--border); animation: fadeUp .4s ease both; }
+    .order-header { padding: 16px 16px 12px; border-bottom: 1px solid var(--border); }
+    .order-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .order-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .order-name { font-weight: 700; font-size: 16px; color: var(--text); flex: 1; }
+    .order-badge {
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px;
+      padding: 3px 10px; font-size: 11px; color: var(--text-muted); font-weight: 600;
+    }
+    .profit-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700;
+    }
+    .profit-chip mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    .profit-chip.positive { background: rgba(74,222,128,.12); color: #4ade80; border: 1px solid rgba(74,222,128,.25); }
+    .profit-chip.negative { background: rgba(244,63,94,.12); color: #f43f5e; border: 1px solid rgba(244,63,94,.25); }
+    .fee-inputs { display: flex; gap: 12px; padding: 12px 16px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
     .fee-inputs mat-form-field { flex: 1; min-width: 140px; }
-    .badge { background: #e8eaf6; color: #3f51b5; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 8px; }
-    .profit-badge { font-size: 13px; font-weight: 600; }
-    .profit-pos { color: #059669; }
-    .profit-neg { color: #dc2626; }
     .table-wrap { overflow-x: auto; }
     .order-table { width: 100%; }
-    .sell-field { width: 90px; }
-    ::ng-deep .sell-field .mat-mdc-form-field-infix { padding: 4px 0; }
-    .order-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #e0e0e0; margin-top: 16px; }
-    .stat-cell { background: white; padding: 12px; text-align: center; }
-    .stat-label { font-size: 11px; color: rgba(0,0,0,.54); }
-    .stat-value { font-size: 15px; font-weight: 600; margin-top: 4px; }
+    .sell-field { width: 88px; }
+    ::ng-deep .sell-field .mat-mdc-form-field-infix { padding: 4px 0; min-height: unset; }
+    .price-cell { color: var(--primary) !important; font-weight: 600; }
+    .profit-pos { color: #4ade80 !important; font-weight: 700; }
+    .profit-neg { color: #f43f5e !important; font-weight: 700; }
+    .order-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); }
+    .stat-cell { padding: 14px 12px; text-align: center; border-right: 1px solid var(--border); transition: background .2s; }
+    .stat-cell:last-child { border-right: none; }
+    .stat-cell:hover { background: var(--surface-2); }
+    .stat-cell.highlight { background: rgba(255,193,7,.05); }
+    .stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; }
+    .stat-value { font-size: 15px; font-weight: 700; margin-top: 5px; color: var(--text); }
+    .stat-currency { font-size: 11px; font-weight: 400; color: var(--text-muted); }
   `],
 })
 export class OrderDetailComponent {
