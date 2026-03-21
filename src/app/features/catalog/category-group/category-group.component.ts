@@ -49,12 +49,13 @@ const COLORS = [
       </div>
 
       <!-- Products -->
-      @if (!category().collapsed) {
+      @if (!category().collapsed || forceExpand()) {
         @for (product of products(); track product.id) {
           <app-product-item
             [product]="product"
             [selectMode]="selectMode()"
             [selected]="selectedIds().has(product.id)"
+            (view)="viewProduct.emit($event)"
             (edit)="editProduct.emit($event)"
             (delete)="deleteProduct.emit($event)"
             (duplicate)="duplicateProduct.emit($event)"
@@ -101,12 +102,14 @@ export class CategoryGroupComponent {
   colorIndex = input<number>(0);
   selectMode = input<boolean>(false);
   selectedIds = input<Set<string>>(new Set());
+  forceExpand = input<boolean>(false);
 
   toggleCollapse = output<string>();
   addProduct = output<string>();
   editProduct = output<Product>();
   deleteProduct = output<string>();
   duplicateProduct = output<Product>();
+  viewProduct = output<Product>();
   deleteCategory = output<string>();
   toggleSelect = output<string>();
   openLightbox = output<string>();

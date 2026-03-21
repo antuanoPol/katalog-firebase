@@ -45,6 +45,12 @@ const PLATFORMS = ['Vinted', 'Allegro', 'OLX', 'Szafa.pl', 'Depop', 'Inne'];
         </div>
 
         <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Transport + cło (zł)</mat-label>
+          <input matInput type="number" formControlName="extraCosts" placeholder="0.00" />
+          <mat-hint>Koszty transportu i opłat celnych przy zakupie</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
           <mat-label>Platforma</mat-label>
           <mat-select formControlName="platform">
             @for (pl of platforms; track pl) {
@@ -78,6 +84,7 @@ export class SaleModalComponent implements OnInit {
   form = this.fb.group({
     productId: ['', Validators.required],
     sellPrice: [0, [Validators.required, Validators.min(0.01)]],
+    extraCosts: [0],
     date: [new Date().toISOString().slice(0, 10), Validators.required],
     platform: ['Vinted', Validators.required],
   });
@@ -97,6 +104,7 @@ export class SaleModalComponent implements OnInit {
       productId: product.id,
       productName: product.name,
       productCost: product.price,
+      extraCosts: Number(v.extraCosts) || 0,
       sellPrice: Number(v.sellPrice) || 0,
       date: v.date!,
       platform: v.platform!,

@@ -90,8 +90,8 @@ interface MonthStat {
               </div>
               <div class="sale-prices">
                 <div class="sale-sell">{{ sale.sellPrice | number:'1.2-2' }} zł</div>
-                <div class="sale-profit" [class.negative]="(sale.sellPrice - sale.productCost) < 0">
-                  {{ (sale.sellPrice - sale.productCost) > 0 ? '+' : '' }}{{ (sale.sellPrice - sale.productCost) | number:'1.2-2' }} zł
+                <div class="sale-profit" [class.negative]="(sale.sellPrice - sale.productCost - (sale.extraCosts ?? 0)) < 0">
+                  {{ (sale.sellPrice - sale.productCost - (sale.extraCosts ?? 0)) >= 0 ? '+' : '' }}{{ (sale.sellPrice - sale.productCost - (sale.extraCosts ?? 0)) | number:'1.2-2' }} zł
                 </div>
               </div>
               <button mat-icon-button (click)="onDelete(sale)" class="del-btn">
@@ -167,7 +167,7 @@ export class HistoryComponent {
   private dialog = inject(MatDialog);
 
   totalRevenue = computed(() => this.data.sales().reduce((s, r) => s + r.sellPrice, 0));
-  totalProfit = computed(() => this.data.sales().reduce((s, r) => s + (r.sellPrice - r.productCost), 0));
+  totalProfit = computed(() => this.data.sales().reduce((s, r) => s + (r.sellPrice - r.productCost - (r.extraCosts ?? 0)), 0));
 
   sortedSales = computed(() =>
     [...this.data.sales()].sort((a, b) => b.date.localeCompare(a.date))
@@ -188,7 +188,7 @@ export class HistoryComponent {
       }
       const m = map.get(key)!;
       m.revenue += sale.sellPrice;
-      m.profit += sale.sellPrice - sale.productCost;
+      m.profit += sale.sellPrice - sale.productCost - (sale.extraCosts ?? 0);
       m.count++;
     }
     return Array.from(map.values()).sort((a, b) => a.key.localeCompare(b.key));

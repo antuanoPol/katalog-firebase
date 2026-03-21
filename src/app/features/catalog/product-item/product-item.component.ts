@@ -23,7 +23,7 @@ import { Product } from '../../../core/models/catalog.models';
       </div>
 
       <!-- Info -->
-      <div class="prod-info">
+      <div class="prod-info" (click)="!selectMode() && view.emit(product())" [class.clickable]="!selectMode()">
         <div class="prod-name">{{ product().name }}</div>
         <div class="prod-meta">
           <span class="prod-price">{{ product().price | number:'1.2-2' }} zł</span>
@@ -80,6 +80,8 @@ import { Product } from '../../../core/models/catalog.models';
     .prod-thumb img { width: 100%; height: 100%; object-fit: cover; }
     .prod-thumb mat-icon { color: var(--text-muted); font-size: 20px; }
     .prod-info { flex: 1; min-width: 0; }
+    .prod-info.clickable { cursor: pointer; }
+    .prod-info.clickable:hover .prod-name { color: var(--primary); }
     .prod-name { font-weight: 600; font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .prod-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
     .prod-price { font-weight: 700; color: var(--primary); }
@@ -95,6 +97,7 @@ export class ProductItemComponent {
   selectMode = input<boolean>(false);
   selected = input<boolean>(false);
 
+  view = output<Product>();
   edit = output<Product>();
   delete = output<string>();
   duplicate = output<Product>();

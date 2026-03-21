@@ -12,6 +12,7 @@ import { CategoryModalComponent } from '../../shared/modals/category-modal/categ
 import { ProductModalComponent, ProductModalData } from '../../shared/modals/product-modal/product-modal.component';
 import { OrderModalComponent, OrderModalData } from '../../shared/modals/order-modal/order-modal.component';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/confirm-dialog/confirm-dialog.component';
+import { ProductDetailComponent } from '../../shared/modals/product-detail/product-detail.component';
 import { Product } from '../../core/models/catalog.models';
 
 @Component({
@@ -92,11 +93,13 @@ import { Product } from '../../core/models/catalog.models';
         [colorIndex]="i"
         [selectMode]="selectMode()"
         [selectedIds]="selectedIds()"
+        [forceExpand]="!!searchQuery"
         (toggleCollapse)="data.toggleCategoryCollapse($event)"
         (addProduct)="openProductModal(null, $event)"
         (editProduct)="openProductModal($event, $event.catId)"
         (deleteProduct)="onDeleteProduct($event)"
         (duplicateProduct)="data.duplicateProduct($event.id)"
+        (viewProduct)="openProductDetail($event)"
         (deleteCategory)="data.deleteCategory($event)"
         (toggleSelect)="toggleSelect($event)"
         (openLightbox)="lightboxSrc.set($event); showLightbox.set(true)"
@@ -257,6 +260,10 @@ export class CatalogComponent {
       .afterClosed().subscribe(ok => {
         if (ok) { this.data.deleteProduct(id); this.notify.notify('Usunięto'); }
       });
+  }
+
+  openProductDetail(product: Product): void {
+    this.dialog.open(ProductDetailComponent, { width: '500px', data: product });
   }
 
   openCategoryModal(): void {

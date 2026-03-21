@@ -40,6 +40,7 @@ export interface SaleRecord {
   productId: string;
   productName: string;
   productCost: number;
+  extraCosts?: number; // transport + cło
   sellPrice: number;
   date: string; // YYYY-MM-DD
   platform: string;
