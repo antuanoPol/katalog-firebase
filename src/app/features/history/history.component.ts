@@ -55,22 +55,15 @@ interface MonthStat {
             @for (m of chartMonths(); track m.key) {
               <div class="bar-col">
                 <div class="bar-wrap">
-                  <div class="bar revenue-bar"
-                    [style.height.%]="barHeight(m.revenue)"
-                    [title]="m.revenue | number:'1.2-2'">
-                  </div>
                   <div class="bar profit-bar"
                     [style.height.%]="barHeight(m.profit)"
-                    [title]="m.profit | number:'1.2-2'">
+                    [title]="(m.profit | number:'1.2-2') + ' zł'">
                   </div>
                 </div>
                 <div class="bar-label">{{ m.label }}</div>
+                <div class="bar-val">{{ m.profit | number:'1.0-0' }} zł</div>
               </div>
             }
-          </div>
-          <div class="chart-legend">
-            <span class="legend-dot rev"></span> Przychód
-            <span class="legend-dot prof"></span> Zysk
           </div>
         </div>
       }
@@ -140,17 +133,13 @@ interface MonthStat {
     .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin-top: 4px; }
     .chart-section { margin: 0 16px 16px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
     .chart-title { font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 12px; }
-    .chart-bars { display: flex; align-items: flex-end; gap: 8px; height: 120px; }
+    .chart-bars { display: flex; align-items: flex-end; gap: 8px; height: 140px; }
     .bar-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
-    .bar-wrap { display: flex; gap: 3px; align-items: flex-end; height: 100px; }
-    .bar { width: 12px; border-radius: 4px 4px 0 0; min-height: 2px; transition: height .4s ease; }
-    .revenue-bar { background: var(--primary); }
+    .bar-wrap { display: flex; align-items: flex-end; height: 100px; }
+    .bar { width: 24px; border-radius: 6px 6px 0 0; min-height: 2px; transition: height .4s ease; }
     .profit-bar { background: #4ade80; }
     .bar-label { font-size: 9px; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
-    .chart-legend { display: flex; align-items: center; gap: 12px; margin-top: 8px; font-size: 11px; color: var(--text-muted); }
-    .legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
-    .legend-dot.rev { background: var(--primary); }
-    .legend-dot.prof { background: #4ade80; }
+    .bar-val { font-size: 10px; color: #4ade80; font-weight: 700; white-space: nowrap; }
     .empty-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 80px 24px; color: var(--text-muted); }
     .empty-state mat-icon { font-size: 48px; width: 48px; height: 48px; }
     .empty-state p { margin: 0; font-size: 14px; }
@@ -212,8 +201,8 @@ export class HistoryComponent {
   });
 
   barHeight(value: number): number {
-    const maxRev = Math.max(...this.chartMonths().map(m => m.revenue), 1);
-    return Math.max(2, (value / maxRev) * 100);
+    const max = Math.max(...this.chartMonths().map(m => m.profit), 1);
+    return Math.max(2, (value / max) * 100);
   }
 
   formatDate(dateStr: string): string {
