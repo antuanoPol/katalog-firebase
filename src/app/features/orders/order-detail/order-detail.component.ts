@@ -122,28 +122,29 @@ import { DataService } from '../../../core/services/data.service';
     </mat-card>
   `,
   styles: [`
-    .order-card { margin: 16px; }
+    .order-card { margin: 16px; animation: fadeUp .4s ease both; }
     .fee-inputs { display: flex; gap: 12px; padding: 0 16px; flex-wrap: wrap; }
     .fee-inputs mat-form-field { flex: 1; min-width: 140px; }
     .badge {
-      background: var(--primary-dim); color: var(--primary);
-      padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 8px;
-      border: 1px solid var(--border); font-weight: 600;
+      background: rgba(124,58,237,.15); color: #a78bfa;
+      padding: 3px 10px; border-radius: 20px; font-size: 11px; margin-right: 8px;
+      border: 1px solid rgba(124,58,237,.3); font-weight: 700; letter-spacing: .04em;
     }
     .profit-badge { font-size: 13px; font-weight: 700; }
-    .profit-pos { color: var(--success); text-shadow: 0 0 8px rgba(16,185,129,.4); }
-    .profit-neg { color: var(--danger); text-shadow: 0 0 8px rgba(244,63,94,.4); }
+    .profit-pos { color: #10b981; text-shadow: 0 0 10px rgba(16,185,129,.5); }
+    .profit-neg { color: #f43f5e; text-shadow: 0 0 10px rgba(244,63,94,.5); }
     .table-wrap { overflow-x: auto; }
     .order-table { width: 100%; }
     .sell-field { width: 90px; }
     ::ng-deep .sell-field .mat-mdc-form-field-infix { padding: 4px 0; }
     .order-stats {
       display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 1px; background: var(--border); margin-top: 16px;
+      gap: 1px; background: rgba(255,255,255,.05); margin-top: 16px; border-radius: 0 0 12px 12px; overflow: hidden;
     }
-    .stat-cell { background: var(--bg-surface); padding: 12px; text-align: center; }
-    .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; }
-    .stat-value { font-size: 15px; font-weight: 700; margin-top: 4px; color: var(--text); }
+    .stat-cell { background: rgba(124,58,237,.06); padding: 14px; text-align: center; transition: background .2s; }
+    .stat-cell:hover { background: rgba(124,58,237,.12); }
+    .stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .12em; font-weight: 600; }
+    .stat-value { font-size: 16px; font-weight: 700; margin-top: 6px; color: var(--text); }
   `],
 })
 export class OrderDetailComponent {

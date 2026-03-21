@@ -24,32 +24,30 @@ import { DataService } from '../../../core/services/data.service';
   styles: [`
     .tab-nav {
       display: flex;
-      background: var(--bg-surface);
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 64px;
-      z-index: 99;
+      background: rgba(5,5,10,.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      position: sticky; top: 64px; z-index: 99;
     }
     .tab-link {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px 4px;
-      text-decoration: none;
-      color: var(--text-muted);
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: .04em;
-      gap: 2px;
-      transition: color .2s, background .2s;
-      text-transform: uppercase;
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      padding: 10px 4px; text-decoration: none; color: var(--text-muted);
+      font-size: 10px; font-weight: 600; letter-spacing: .08em; gap: 3px;
+      transition: color .25s, background .25s; text-transform: uppercase;
+      position: relative;
     }
-    .tab-link:hover { color: var(--text); background: var(--bg-hover); }
-    .tab-link.active-tab {
-      color: var(--primary);
-      border-bottom: 2px solid var(--primary);
-      background: var(--primary-dim);
+    .tab-link mat-icon { font-size: 20px; width: 20px; height: 20px; transition: transform .25s, filter .25s; }
+    .tab-link:hover { color: var(--text); }
+    .tab-link:hover mat-icon { transform: translateY(-2px); }
+    .tab-link.active-tab { color: #a78bfa; }
+    .tab-link.active-tab mat-icon { filter: drop-shadow(0 0 6px #a78bfa); transform: translateY(-2px); }
+    .tab-link.active-tab::after {
+      content: ''; position: absolute; bottom: 0; left: 20%; right: 20%;
+      height: 2px; border-radius: 2px 2px 0 0;
+      background: linear-gradient(90deg, #7c3aed, #a78bfa);
+      box-shadow: 0 0 8px #a78bfa;
+      animation: fadeIn .3s ease;
     }
   `],
 })

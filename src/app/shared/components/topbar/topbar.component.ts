@@ -50,25 +50,25 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../modals/confirm-
   styles: [`
     mat-toolbar {
       position: sticky; top: 0; z-index: 100;
-      background: linear-gradient(90deg, #0f0f1e 0%, #16162e 100%) !important;
-      border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(12px);
+      background: rgba(5,5,10,.7) !important;
+      backdrop-filter: blur(24px) saturate(160%) !important;
+      -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+      border-bottom: 1px solid rgba(124,58,237,.2) !important;
     }
     .toolbar-title {
-      display: flex; align-items: center; gap: 8px; font-weight: 700;
-      font-size: 16px; letter-spacing: 0.02em;
-      background: linear-gradient(90deg, #fff 0%, var(--primary) 100%);
+      display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px;
+      background: linear-gradient(90deg, #fff 20%, #a78bfa 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: .03em;
     }
     .spacer { flex: 1; }
     .sync-indicator { display: flex; align-items: center; margin-right: 4px; }
-    .sync-icon { font-size: 18px; width: 18px; height: 18px; }
-    .sync-online { color: var(--success); filter: drop-shadow(0 0 4px var(--success)); }
-    .sync-syncing { color: #fbbf24; animation: pulse 0.8s infinite alternate; }
-    .sync-offline { color: var(--danger); }
+    .sync-icon { font-size: 18px; width: 18px; height: 18px; transition: filter .3s; }
+    .sync-online  { color: #10b981; filter: drop-shadow(0 0 6px #10b981); }
+    .sync-syncing { color: #fbbf24; animation: spin .8s linear infinite; }
+    .sync-offline { color: #f43f5e; filter: drop-shadow(0 0 6px #f43f5e); }
     .menu-email { padding: 8px 16px; font-size: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
-    .logout-item { color: var(--danger) !important; }
-    @keyframes pulse { from { opacity: 1; } to { opacity: 0.3; } }
+    .logout-item { color: #f43f5e !important; }
   `],
 })
 export class TopbarComponent {
