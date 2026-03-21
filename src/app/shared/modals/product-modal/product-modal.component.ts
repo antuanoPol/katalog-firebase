@@ -120,7 +120,7 @@ export interface ProductModalData {
     </mat-dialog-actions>
   `,
   styles: [`
-    .product-form { display: flex; flex-direction: column; gap: 4px; min-width: 300px; }
+    .product-form { display: flex; flex-direction: column; gap: 4px; min-width: 300px; padding-top: 8px; }
     .full-width { width: 100%; }
     .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     mat-dialog-content { max-height: 70vh; overflow-y: auto; }

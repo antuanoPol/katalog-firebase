@@ -13,10 +13,12 @@ import { TabBarComponent } from './shared/components/tab-bar/tab-bar.component';
     @if (auth.user()) {
       <div class="app-shell">
         <app-topbar />
-        <main class="content">
-          <router-outlet />
-        </main>
-        <app-tab-bar />
+        <div class="shell-body">
+          <app-tab-bar />
+          <main class="content">
+            <router-outlet />
+          </main>
+        </div>
       </div>
     } @else {
       <router-outlet />
@@ -24,8 +26,11 @@ import { TabBarComponent } from './shared/components/tab-bar/tab-bar.component';
   `,
   styles: [`
     .app-shell { display: flex; flex-direction: column; height: 100dvh; background: var(--bg); }
+    .shell-body { flex: 1; display: flex; min-height: 0; }
     .content { flex: 1; overflow-y: auto; padding-bottom: 72px; }
-    :host-context([data-theme="light"]) .content { padding-bottom: 0; order: 2; }
+    @media (min-width: 768px) {
+      .content { padding-bottom: 0; }
+    }
   `],
 })
 export class AppComponent {

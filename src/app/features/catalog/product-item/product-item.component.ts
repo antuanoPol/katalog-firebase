@@ -90,6 +90,7 @@ import { Product } from '../../../core/models/catalog.models';
     .prod-desc { font-size: 11px; color: var(--text-muted); margin-top: 3px; opacity: .7; }
     .prod-actions { display: flex; opacity: 0; transition: opacity .2s; }
     .prod-item:hover .prod-actions { opacity: 1; }
+    @media (hover: none) { .prod-actions { opacity: 1; } }
   `],
 })
 export class ProductItemComponent {

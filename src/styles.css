@@ -364,3 +364,14 @@ body {
   padding: 0 !important;
   overflow: hidden;
 }
+
+/* ── Mobile dialogs — slide up from bottom ─────────────────── */
+@media (max-width: 500px) {
+  .mat-mdc-dialog-container .mat-mdc-dialog-surface {
+    border-radius: 20px 20px 0 0 !important;
+  }
+  .cdk-overlay-pane {
+    align-self: flex-end !important;
+    margin-bottom: 0 !important;
+  }
+}
