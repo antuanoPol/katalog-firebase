@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
+import { ThemeService } from './core/services/theme.service';
 import { TopbarComponent } from './shared/components/topbar/topbar.component';
 import { TabBarComponent } from './shared/components/tab-bar/tab-bar.component';
 
@@ -28,4 +29,6 @@ import { TabBarComponent } from './shared/components/tab-bar/tab-bar.component';
 })
 export class AppComponent {
   auth = inject(AuthService);
+  // Inject ThemeService to ensure it initializes on app startup and applies saved theme
+  theme = inject(ThemeService);
 }

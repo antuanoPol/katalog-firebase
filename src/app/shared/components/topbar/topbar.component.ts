@@ -6,6 +6,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog } from '@angular/material/dialog';
 import { AuthService } from '../../../core/services/auth.service';
 import { DataService } from '../../../core/services/data.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../modals/confirm-dialog/confirm-dialog.component';
 
 @Component({
@@ -25,6 +26,13 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../modals/confirm-
         <div class="sync-dot" [class]="'sync-' + data.syncState()" [title]="syncTitle()">
           <mat-icon class="sync-icon">{{ syncIcon() }}</mat-icon>
         </div>
+
+        <!-- Theme toggle -->
+        <button class="icon-btn" (click)="theme.toggle()"
+          [title]="theme.theme() === 'dark' ? 'Tryb jasny' : 'Tryb ciemny'">
+          <mat-icon>{{ theme.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+        </button>
+
         <button class="avatar-btn" [matMenuTriggerFor]="userMenu">
           <span class="avatar-letter">{{ avatarLetter() }}</span>
         </button>
@@ -55,37 +63,50 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../modals/confirm-
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 100;
+      transition: background .3s, border-color .3s;
       animation: fadeUp .3s ease;
     }
     .topbar-brand { display: flex; align-items: center; gap: 10px; }
     .brand-icon {
       width: 36px; height: 36px; border-radius: 10px;
       background: var(--primary); display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 16px rgba(255,193,7,.35);
+      box-shadow: 0 0 16px var(--primary-glow);
+      transition: background .3s, box-shadow .3s;
     }
     .brand-icon mat-icon { color: #12121f; font-size: 20px; width: 20px; height: 20px; }
-    .brand-name { font-weight: 700; font-size: 17px; letter-spacing: .02em; color: var(--text); }
-    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .brand-name { font-weight: 700; font-size: 17px; letter-spacing: .02em; color: var(--text); transition: color .3s; }
+    .topbar-right { display: flex; align-items: center; gap: 8px; }
     .sync-dot {
       display: flex; align-items: center; gap: 5px;
       padding: 4px 10px; border-radius: 20px;
       background: var(--surface-2); border: 1px solid var(--border);
       font-size: 11px; font-weight: 600; letter-spacing: .04em;
+      transition: background .3s, border-color .3s;
     }
     .sync-icon { font-size: 14px; width: 14px; height: 14px; }
-    .sync-online  { border-color: rgba(74,222,128,.3); color: #4ade80; }
+    .sync-online  { border-color: rgba(74,222,128,.35) !important; }
     .sync-online .sync-icon { color: #4ade80; }
-    .sync-syncing { border-color: rgba(255,193,7,.3); color: var(--primary); }
+    .sync-syncing { border-color: rgba(255,193,7,.35) !important; }
     .sync-syncing .sync-icon { color: var(--primary); animation: spin .7s linear infinite; }
-    .sync-offline { border-color: rgba(244,63,94,.3); color: #f43f5e; }
+    .sync-offline { border-color: rgba(244,63,94,.35) !important; }
     .sync-offline .sync-icon { color: #f43f5e; animation: pulse .8s infinite alternate; }
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1px solid var(--border); background: var(--surface-2);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text-muted);
+      transition: all .2s;
+    }
+    .icon-btn:hover { color: var(--primary); border-color: var(--border-primary); background: var(--primary-glow); }
+    .icon-btn mat-icon { font-size: 18px; width: 18px; height: 18px; }
     .avatar-btn {
-      width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border-amber);
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid var(--border-primary);
       background: var(--primary-glow); cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: border-color .2s, box-shadow .2s;
     }
-    .avatar-btn:hover { border-color: var(--primary); box-shadow: 0 0 12px rgba(255,193,7,.3); }
+    .avatar-btn:hover { box-shadow: 0 0 12px var(--primary-glow); }
     .avatar-letter { font-weight: 700; font-size: 14px; color: var(--primary); }
     .menu-email { padding: 10px 16px 8px; font-size: 11px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
     .logout-item { color: var(--danger) !important; }
@@ -95,6 +116,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../modals/confirm-
 export class TopbarComponent {
   auth = inject(AuthService);
   data = inject(DataService);
+  theme = inject(ThemeService);
   private dialog = inject(MatDialog);
 
   avatarLetter() {
