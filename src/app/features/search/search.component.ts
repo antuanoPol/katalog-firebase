@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { NotificationService } from '../../core/services/notification.service';
 
 const UUFINDS_TOKEN_KEY = 'uufinds_token';
-const UPLOAD_URL = 'https://api.uufinds.com/sys/common/upload';
+const API = 'https://api.uufinds.com';
 
 @Component({
   selector: 'app-search',
@@ -18,7 +18,7 @@ const UPLOAD_URL = 'https://api.uufinds.com/sys/common/upload';
         <p class="page-subtitle">Wrzuć zdjęcie produktu — otworzymy obie strony jednocześnie</p>
       </div>
 
-      <!-- uufinds connection status -->
+      <!-- uufinds connection card -->
       <div class="connect-card" [class.connected]="uufindsToken()">
         <div class="connect-header">
           <div class="connect-logo">UU</div>
@@ -27,24 +27,50 @@ const UPLOAD_URL = 'https://api.uufinds.com/sys/common/upload';
             @if (uufindsToken()) {
               <div class="connect-status ok"><mat-icon>check_circle</mat-icon> Połączono — automatyczne wyszukiwanie</div>
             } @else {
-              <div class="connect-status warn"><mat-icon>warning</mat-icon> Brak połączenia — tylko kopiowanie do schowka</div>
+              <div class="connect-status warn"><mat-icon>link_off</mat-icon> Brak połączenia — tylko schowek</div>
             }
           </div>
           @if (uufindsToken()) {
-            <button class="disconnect-btn" (click)="disconnect()">Odłącz</button>
+            <button class="text-btn danger" (click)="disconnect()">Odłącz</button>
+          } @else {
+            <button class="text-btn" (click)="toggleLoginForm()">
+              {{ showLogin() ? 'Anuluj' : 'Zaloguj' }}
+            </button>
           }
         </div>
 
-        @if (!uufindsToken()) {
-          <div class="token-form">
-            <p class="token-hint">
-              Zaloguj się na <strong>uufinds.com</strong>, otwórz DevTools → Application → Local Storage → <code>USER_TOKEN</code> i wklej poniżej:
-            </p>
-            <div class="token-input-row">
-              <input class="token-input" type="password" [(ngModel)]="tokenInput"
-                placeholder="eyJ0eXAiOiJKV1..." />
-              <button class="connect-btn" (click)="connect()" [disabled]="!tokenInput.trim()">
-                Połącz
+        @if (showLogin() && !uufindsToken()) {
+          <div class="login-form">
+            <div class="form-row">
+              <input class="form-input" type="email" [(ngModel)]="loginEmail"
+                placeholder="E-mail" autocomplete="email" />
+            </div>
+            <div class="form-row">
+              <input class="form-input" type="password" [(ngModel)]="loginPassword"
+                placeholder="Hasło" autocomplete="current-password" />
+            </div>
+            <div class="captcha-row">
+              @if (captchaImg()) {
+                <img [src]="captchaImg()" class="captcha-img" (click)="loadCaptcha()" title="Kliknij aby odświeżyć" />
+              } @else {
+                <div class="captcha-placeholder" (click)="loadCaptcha()">
+                  <mat-icon class="spin">sync</mat-icon>
+                </div>
+              }
+              <input class="form-input captcha-input" [(ngModel)]="captchaCode"
+                placeholder="Kod z obrazka" (keydown.enter)="loginToUufinds()" />
+            </div>
+            <div class="form-actions">
+              @if (loginError()) {
+                <span class="login-error"><mat-icon>error_outline</mat-icon> {{ loginError() }}</span>
+              }
+              <button class="connect-btn" (click)="loginToUufinds()"
+                [disabled]="isLoggingIn() || !loginEmail || !loginPassword || !captchaCode">
+                @if (isLoggingIn()) {
+                  <mat-icon class="spin">sync</mat-icon> Logowanie...
+                } @else {
+                  Zaloguj się
+                }
               </button>
             </div>
           </div>
@@ -166,37 +192,51 @@ const UPLOAD_URL = 'https://api.uufinds.com/sys/common/upload';
     .connect-status mat-icon { font-size: 14px; width: 14px; height: 14px; }
     .connect-status.ok { color: var(--success); }
     .connect-status.warn { color: var(--text-muted); }
-    .disconnect-btn {
+    .text-btn {
       background: none; border: 1px solid var(--border); border-radius: 6px;
-      padding: 4px 10px; font-size: 11px; color: var(--text-muted);
-      cursor: pointer; font-family: inherit; transition: all .2s;
+      padding: 5px 12px; font-size: 12px; font-weight: 600; color: var(--text-muted);
+      cursor: pointer; font-family: inherit; transition: all .2s; white-space: nowrap;
     }
-    .disconnect-btn:hover { border-color: var(--danger); color: var(--danger); }
+    .text-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .text-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
 
-    /* Token form */
-    .token-form { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
-    .token-hint { margin: 0 0 10px; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
-    .token-hint strong { color: var(--text); }
-    .token-hint code {
-      background: var(--surface-2); border: 1px solid var(--border);
-      border-radius: 4px; padding: 1px 4px; font-size: 11px;
-    }
-    .token-input-row { display: flex; gap: 8px; }
-    .token-input {
-      flex: 1; height: 36px; border-radius: 8px;
+    /* Login form */
+    .login-form { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .form-row { display: flex; }
+    .form-input {
+      flex: 1; height: 38px; border-radius: 8px;
       border: 1px solid var(--border); background: var(--surface-2);
-      color: var(--text); font-size: 12px; font-family: monospace;
-      padding: 0 10px; outline: none; transition: border-color .2s;
+      color: var(--text); font-size: 13px; font-family: inherit;
+      padding: 0 12px; outline: none; transition: border-color .2s;
     }
-    .token-input:focus { border-color: var(--primary); }
+    .form-input:focus { border-color: var(--primary); }
+    .captcha-row { display: flex; gap: 8px; align-items: center; }
+    .captcha-img {
+      height: 38px; border-radius: 6px; border: 1px solid var(--border);
+      cursor: pointer; object-fit: contain; background: white; min-width: 90px;
+    }
+    .captcha-placeholder {
+      width: 90px; height: 38px; border-radius: 6px; border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      background: var(--surface-2); cursor: pointer;
+    }
+    .captcha-placeholder mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--text-muted); }
+    .captcha-input { min-width: 0; }
+    .form-actions { display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
+    .login-error {
+      flex: 1; display: flex; align-items: center; gap: 5px;
+      font-size: 11px; color: var(--danger);
+    }
+    .login-error mat-icon { font-size: 14px; width: 14px; height: 14px; }
     .connect-btn {
-      height: 36px; padding: 0 14px; border-radius: 8px;
+      height: 38px; padding: 0 18px; border-radius: 8px;
       background: var(--primary); color: #12121f;
       border: none; cursor: pointer; font-size: 13px; font-weight: 700;
       font-family: inherit; transition: opacity .2s;
-      white-space: nowrap;
+      display: flex; align-items: center; gap: 6px; white-space: nowrap;
     }
     .connect-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .connect-btn mat-icon { font-size: 16px; width: 16px; height: 16px; }
     :host-context([data-theme="light"]) .connect-btn { color: white; }
 
     /* Drop zone */
@@ -210,8 +250,7 @@ const UPLOAD_URL = 'https://api.uufinds.com/sys/common/upload';
       margin-bottom: 16px;
     }
     .drop-zone:hover, .drop-zone.drag-over {
-      border-color: var(--primary);
-      background: var(--primary-glow);
+      border-color: var(--primary); background: var(--primary-glow);
     }
     .drop-zone.has-image { border-style: solid; min-height: 240px; }
 
@@ -220,8 +259,7 @@ const UPLOAD_URL = 'https://api.uufinds.com/sys/common/upload';
       width: 64px; height: 64px; border-radius: 18px;
       background: var(--primary-glow); border: 1px solid var(--border-primary);
       display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 16px;
-      transition: transform .2s;
+      margin: 0 auto 16px; transition: transform .2s;
     }
     .drop-zone:hover .drop-icon-wrap { transform: scale(1.08); }
     .drop-icon-wrap mat-icon { font-size: 30px; width: 30px; height: 30px; color: var(--primary); }
@@ -238,10 +276,6 @@ const UPLOAD_URL = 'https://api.uufinds.com/sys/common/upload';
     }
     .preview-overlay mat-icon { font-size: 28px; width: 28px; height: 28px; }
     .drop-zone:hover .preview-overlay { opacity: 1; }
-    .drop-zone.has-image:hover .preview-overlay { opacity: 1; }
-
-    /* Show overlay when uploading even without hover */
-    .drop-zone.has-image .preview-overlay:has(.spin) { opacity: 1; }
 
     /* Search button */
     .search-btn {
@@ -275,10 +309,7 @@ const UPLOAD_URL = 'https://api.uufinds.com/sys/common/upload';
     }
     .site-name { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
     .site-steps { display: flex; flex-direction: column; gap: 6px; }
-    .step {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 12px; color: var(--text-muted);
-    }
+    .step { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); }
     .step mat-icon { font-size: 15px; width: 15px; height: 15px; flex-shrink: 0; }
     .step.done { color: var(--success); }
     .step.done mat-icon { color: var(--success); }
@@ -288,7 +319,6 @@ const UPLOAD_URL = 'https://api.uufinds.com/sys/common/upload';
       background: var(--surface-2); border: 1px solid var(--border);
       border-radius: 4px; padding: 1px 5px; font-size: 11px; font-family: monospace;
     }
-
     .spin { animation: spin .7s linear infinite; }
   `],
 })
@@ -303,23 +333,76 @@ export class SearchComponent implements OnInit {
   uufindsToken = signal<string | null>(null);
   uufindsImageUrl = signal<string | null>(null);
 
-  tokenInput = '';
+  // Login form
+  showLogin = signal(false);
+  loginEmail = '';
+  loginPassword = '';
+  captchaCode = '';
+  captchaImg = signal<string | null>(null);
+  captchaKey = '';
+  isLoggingIn = signal(false);
+  loginError = signal<string | null>(null);
 
   ngOnInit(): void {
     const saved = localStorage.getItem(UUFINDS_TOKEN_KEY);
     if (saved) this.uufindsToken.set(saved);
   }
 
-  connect(): void {
-    const t = this.tokenInput.trim();
-    if (!t) return;
-    localStorage.setItem(UUFINDS_TOKEN_KEY, t);
-    this.uufindsToken.set(t);
-    this.tokenInput = '';
-    this.notify.notify('Połączono z uufinds!');
-    // If image already loaded, upload it now
-    const file = this.imageFile();
-    if (file) this.uploadToUufinds(file, t);
+  toggleLoginForm(): void {
+    this.showLogin.update(v => !v);
+    if (this.showLogin()) this.loadCaptcha();
+    this.loginError.set(null);
+  }
+
+  async loadCaptcha(): Promise<void> {
+    this.captchaImg.set(null);
+    this.captchaKey = Math.random().toString(36).substring(2) + Date.now();
+    try {
+      const res = await fetch(`${API}/user/captcha/image/${this.captchaKey}`);
+      const json = await res.json();
+      if (json.success && json.message) {
+        this.captchaImg.set(json.message); // base64 data URI
+      }
+    } catch { /* ignore */ }
+  }
+
+  async loginToUufinds(): Promise<void> {
+    if (!this.loginEmail || !this.loginPassword || !this.captchaCode) return;
+    this.isLoggingIn.set(true);
+    this.loginError.set(null);
+    try {
+      const res = await fetch(`${API}/user/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: this.loginEmail,
+          password: this.loginPassword,
+          captcha: this.captchaCode,
+          checkKey: this.captchaKey,
+        }),
+      });
+      const json = await res.json();
+      if (json.success && json.result?.token) {
+        const token = json.result.token;
+        localStorage.setItem(UUFINDS_TOKEN_KEY, token);
+        this.uufindsToken.set(token);
+        this.showLogin.set(false);
+        this.loginEmail = '';
+        this.loginPassword = '';
+        this.captchaCode = '';
+        this.notify.notify('Połączono z uufinds!');
+        const file = this.imageFile();
+        if (file) this.uploadToUufinds(file, token);
+      } else {
+        this.loginError.set(json.message || 'Błąd logowania');
+        this.captchaCode = '';
+        this.loadCaptcha();
+      }
+    } catch {
+      this.loginError.set('Błąd połączenia z siecią');
+    } finally {
+      this.isLoggingIn.set(false);
+    }
   }
 
   disconnect(): void {
@@ -353,8 +436,6 @@ export class SearchComponent implements OnInit {
     const prev = this.imagePreviewUrl();
     if (prev) URL.revokeObjectURL(prev);
     this.imagePreviewUrl.set(URL.createObjectURL(file));
-
-    // Pre-upload to uufinds in the background if token exists
     const token = this.uufindsToken();
     if (token) this.uploadToUufinds(file, token);
   }
@@ -367,8 +448,7 @@ export class SearchComponent implements OnInit {
       const formData = new FormData();
       formData.append('biz', 'mobile');
       formData.append('file', blob, 'product.jpg');
-
-      const res = await fetch(UPLOAD_URL, {
+      const res = await fetch(`${API}/sys/common/upload`, {
         method: 'POST',
         headers: { 'X-Access-Token': token },
         body: formData,
@@ -376,37 +456,25 @@ export class SearchComponent implements OnInit {
       const json = await res.json();
       if (json.success && json.result?.url) {
         this.uufindsImageUrl.set(json.result.url);
-      } else {
-        // Token may be expired
-        this.uufindsImageUrl.set(null);
       }
-    } catch {
-      this.uufindsImageUrl.set(null);
-    } finally {
-      this.isUploading.set(false);
-    }
+    } catch { /* ignore */ }
+    finally { this.isUploading.set(false); }
   }
 
   search(): void {
     const file = this.imageFile();
     if (!file || this.isUploading()) return;
     this.isSearching.set(true);
-
     const imageUrl = this.uufindsImageUrl();
-
     if (imageUrl) {
-      // Open uufinds directly on image search results page + kakobuy
-      const uuUrl = `https://www.uufinds.com/imageSearchList?imageUrl=${encodeURIComponent(imageUrl)}`;
-      window.open(uuUrl, '_blank');
+      window.open(`https://www.uufinds.com/imageSearchList?imageUrl=${encodeURIComponent(imageUrl)}`, '_blank');
       window.open('https://www.kakobuy.com/', '_blank');
       this.notify.notify('Obie strony otwarte z wynikami!');
     } else {
-      // Fallback: open blank pages + copy to clipboard
       window.open('https://www.uufinds.com/qcfinds', '_blank');
       window.open('https://www.kakobuy.com/', '_blank');
       this.copyToClipboard(file);
     }
-
     this.isSearching.set(false);
   }
 
@@ -430,10 +498,10 @@ export class SearchComponent implements OnInit {
           if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
           else { w = Math.round(w * MAX / h); h = MAX; }
         }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
-        canvas.toBlob(b => b ? resolve(b) : reject(), 'image/jpeg', 0.85);
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        c.toBlob(b => b ? resolve(b) : reject(), 'image/jpeg', 0.85);
       };
       img.onerror = reject;
       img.src = URL.createObjectURL(file);
@@ -444,11 +512,10 @@ export class SearchComponent implements OnInit {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        canvas.getContext('2d')!.drawImage(img, 0, 0);
-        canvas.toBlob(b => b ? resolve(b) : reject(), 'image/png');
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        c.getContext('2d')!.drawImage(img, 0, 0);
+        c.toBlob(b => b ? resolve(b) : reject(), 'image/png');
       };
       img.onerror = reject;
       img.src = URL.createObjectURL(file);
