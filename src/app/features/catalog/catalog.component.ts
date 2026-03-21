@@ -263,7 +263,7 @@ export class CatalogComponent {
   }
 
   openProductDetail(product: Product): void {
-    this.dialog.open(ProductDetailComponent, { width: '500px', data: product });
+    this.dialog.open(ProductDetailComponent, { width: '500px', data: product, panelClass: 'detail-dialog' });
   }
 
   openCategoryModal(): void {

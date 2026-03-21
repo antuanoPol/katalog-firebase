@@ -76,14 +76,14 @@ import { Product } from '../../../core/models/catalog.models';
         }
       </div>
 
-      <mat-dialog-actions align="end">
+      <mat-dialog-actions align="end" style="padding: 8px 16px;">
         <button mat-button mat-dialog-close>Zamknij</button>
       </mat-dialog-actions>
     </div>
   `,
   styles: [`
     .detail-wrap { min-width: 320px; max-width: 480px; }
-    .gallery { margin: -24px -24px 0; }
+    .gallery { }
     .main-img-wrap { position: relative; background: #111; }
     .main-img { width: 100%; max-height: 320px; object-fit: contain; display: block; }
     .nav-btn {
@@ -106,9 +106,9 @@ import { Product } from '../../../core/models/catalog.models';
     .thumbs { display: flex; gap: 6px; padding: 8px; overflow-x: auto; background: rgba(0,0,0,.3); }
     .thumb { width: 52px; height: 52px; object-fit: cover; border-radius: 6px; cursor: pointer; opacity: .6; transition: opacity .2s, outline .2s; flex-shrink: 0; }
     .thumb.active { opacity: 1; outline: 2px solid var(--primary); }
-    .no-img { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 40px; color: var(--text-muted, #888); }
+    .no-img { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 40px 24px; color: var(--text-muted, #888); }
     .no-img mat-icon { font-size: 48px; width: 48px; height: 48px; }
-    .details { padding: 16px 0 0; }
+    .details { padding: 16px 24px 0; }
     .prod-name { margin: 0 0 6px; font-size: 20px; font-weight: 800; color: var(--text, #fff); }
     .cat-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 20px; background: var(--primary-glow, rgba(255,193,7,.15)); color: var(--primary, #ffc107); border: 1px solid var(--border-amber, rgba(255,193,7,.3)); margin-bottom: 16px; }
     .params-grid { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }

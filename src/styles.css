@@ -358,3 +358,9 @@ body {
   -webkit-text-fill-color: var(--text) !important;
   caret-color: var(--primary) !important;
 }
+
+/* ── Product detail dialog — edge-to-edge gallery ─────────── */
+.detail-dialog .mat-mdc-dialog-surface {
+  padding: 0 !important;
+  overflow: hidden;
+}
