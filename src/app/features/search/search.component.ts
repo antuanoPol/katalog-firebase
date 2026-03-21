@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -32,47 +32,51 @@ const API = 'https://api.uufinds.com';
           </div>
           @if (uufindsToken()) {
             <button class="text-btn danger" (click)="disconnect()">Odłącz</button>
-          } @else {
-            <button class="text-btn" (click)="toggleLoginForm()">
-              {{ showLogin() ? 'Anuluj' : 'Zaloguj' }}
+          } @else if (!showConnect()) {
+            <button class="text-btn primary" (click)="startGoogleLogin()" [disabled]="isLoadingOAuth()">
+              @if (isLoadingOAuth()) { <mat-icon class="spin-sm">sync</mat-icon> } Połącz
             </button>
           }
         </div>
 
-        @if (showLogin() && !uufindsToken()) {
-          <div class="login-form">
-            <div class="form-row">
-              <input class="form-input" type="email" [(ngModel)]="loginEmail"
-                placeholder="E-mail" autocomplete="email" />
+        <!-- Step 1: waiting for OAuth popup -->
+        @if (showConnect() && oauthStep() === 'waiting') {
+          <div class="oauth-step">
+            <div class="oauth-step-icon spin-wrap"><mat-icon class="spin">sync</mat-icon></div>
+            <div>
+              <div class="oauth-step-title">Zaloguj się przez Google w otwartym oknie</div>
+              <div class="oauth-step-hint">Po zalogowaniu wróć tutaj — automatycznie wykryjemy zakończenie</div>
             </div>
-            <div class="form-row">
-              <input class="form-input" type="password" [(ngModel)]="loginPassword"
-                placeholder="Hasło" autocomplete="current-password" />
+            <button class="text-btn" (click)="cancelConnect()">Anuluj</button>
+          </div>
+        }
+
+        <!-- Step 2: popup closed, need to get token -->
+        @if (showConnect() && oauthStep() === 'get-token') {
+          <div class="token-section">
+            <div class="token-step-banner">
+              <mat-icon>check_circle</mat-icon>
+              <span>Zalogowałeś się! Ostatni krok — skopiuj token:</span>
             </div>
-            <div class="captcha-row">
-              @if (captchaImg()) {
-                <img [src]="captchaImg()" class="captcha-img" (click)="loadCaptcha()" title="Kliknij aby odświeżyć" />
-              } @else {
-                <div class="captcha-placeholder" (click)="loadCaptcha()">
-                  <mat-icon class="spin">sync</mat-icon>
-                </div>
+            <div class="console-box">
+              <div class="console-label">Wklej w konsoli uufinds (F12 → Console):</div>
+              <div class="console-cmd" (click)="copyConsoleCmd()">
+                <code>copy(localStorage.USER_TOKEN)</code>
+                <mat-icon class="copy-icon">{{ cmdCopied() ? 'check' : 'content_copy' }}</mat-icon>
+              </div>
+              <div class="console-hint">Naciśnij Enter — token trafi do schowka. Potem wklej poniżej:</div>
+            </div>
+            <div class="token-paste-row">
+              <input class="form-input" type="password" [(ngModel)]="pastedToken"
+                placeholder="Wklej token tutaj (Ctrl+V)..."
+                (ngModelChange)="onTokenPaste($event)" />
+              @if (pastedToken) {
+                <button class="connect-btn" (click)="saveToken()">Połącz</button>
               }
-              <input class="form-input captcha-input" [(ngModel)]="captchaCode"
-                placeholder="Kod z obrazka" (keydown.enter)="loginToUufinds()" />
             </div>
-            <div class="form-actions">
-              @if (loginError()) {
-                <span class="login-error"><mat-icon>error_outline</mat-icon> {{ loginError() }}</span>
-              }
-              <button class="connect-btn" (click)="loginToUufinds()"
-                [disabled]="isLoggingIn() || !loginEmail || !loginPassword || !captchaCode">
-                @if (isLoggingIn()) {
-                  <mat-icon class="spin">sync</mat-icon> Logowanie...
-                } @else {
-                  Zaloguj się
-                }
-              </button>
-            </div>
+            <button class="open-uufinds-btn" (click)="openUufinds()">
+              <mat-icon>open_in_new</mat-icon> Otwórz uufinds.com (F12 → Console)
+            </button>
           </div>
         }
       </div>
@@ -90,21 +94,16 @@ const API = 'https://api.uufinds.com';
           <img [src]="imagePreviewUrl()" class="preview-img" alt="Podgląd" />
           <div class="preview-overlay">
             @if (isUploading()) {
-              <mat-icon class="spin">sync</mat-icon>
-              <span>Przesyłam...</span>
+              <mat-icon class="spin">sync</mat-icon><span>Przesyłam...</span>
             } @else if (uufindsImageUrl()) {
-              <mat-icon>cloud_done</mat-icon>
-              <span>Gotowe — zmień zdjęcie</span>
+              <mat-icon>cloud_done</mat-icon><span>Gotowe — zmień zdjęcie</span>
             } @else {
-              <mat-icon>change_circle</mat-icon>
-              <span>Zmień zdjęcie</span>
+              <mat-icon>change_circle</mat-icon><span>Zmień zdjęcie</span>
             }
           </div>
         } @else {
           <div class="drop-placeholder">
-            <div class="drop-icon-wrap">
-              <mat-icon>add_photo_alternate</mat-icon>
-            </div>
+            <div class="drop-icon-wrap"><mat-icon>add_photo_alternate</mat-icon></div>
             <p class="drop-label">Kliknij lub przeciągnij zdjęcie</p>
             <p class="drop-hint">JPG, PNG, WEBP</p>
           </div>
@@ -113,7 +112,6 @@ const API = 'https://api.uufinds.com';
       <input #fileInput type="file" accept="image/*" style="display:none"
         (change)="onFileSelected($event)" />
 
-      <!-- Search button -->
       @if (imagePreviewUrl()) {
         <button class="search-btn" (click)="search()" [disabled]="isSearching() || isUploading()">
           @if (isUploading()) {
@@ -126,7 +124,7 @@ const API = 'https://api.uufinds.com';
         </button>
       }
 
-      <!-- Instructions -->
+      <!-- Site instructions -->
       <div class="sites-info">
         <div class="site-card">
           <div class="site-logo">UU</div>
@@ -143,7 +141,6 @@ const API = 'https://api.uufinds.com';
             </div>
           </div>
         </div>
-
         <div class="site-card">
           <div class="site-logo">KK</div>
           <div class="site-body">
@@ -159,12 +156,7 @@ const API = 'https://api.uufinds.com';
     </div>
   `,
   styles: [`
-    .search-page {
-      padding: 20px 16px 32px;
-      max-width: 540px;
-      margin: 0 auto;
-      animation: fadeUp .3s ease;
-    }
+    .search-page { padding: 20px 16px 32px; max-width: 540px; margin: 0 auto; animation: fadeUp .3s ease; }
     .search-header { margin-bottom: 16px; }
     .page-title { margin: 0 0 6px; font-size: 20px; font-weight: 700; color: var(--text); }
     .page-subtitle { margin: 0; font-size: 13px; color: var(--text-muted); }
@@ -172,8 +164,8 @@ const API = 'https://api.uufinds.com';
     /* Connect card */
     .connect-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 14px 16px;
-      margin-bottom: 16px; transition: border-color .2s;
+      border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px;
+      transition: border-color .2s;
     }
     .connect-card.connected { border-color: var(--border-primary); }
     .connect-header { display: flex; align-items: center; gap: 12px; }
@@ -185,24 +177,64 @@ const API = 'https://api.uufinds.com';
     }
     .connect-info { flex: 1; min-width: 0; }
     .connect-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
-    .connect-status {
-      display: flex; align-items: center; gap: 5px;
-      font-size: 11px; font-weight: 600;
-    }
+    .connect-status { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; }
     .connect-status mat-icon { font-size: 14px; width: 14px; height: 14px; }
     .connect-status.ok { color: var(--success); }
     .connect-status.warn { color: var(--text-muted); }
+
     .text-btn {
       background: none; border: 1px solid var(--border); border-radius: 6px;
       padding: 5px 12px; font-size: 12px; font-weight: 600; color: var(--text-muted);
       cursor: pointer; font-family: inherit; transition: all .2s; white-space: nowrap;
+      display: flex; align-items: center; gap: 4px;
     }
     .text-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .text-btn.primary { border-color: var(--border-primary); color: var(--primary); }
     .text-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+    .text-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .spin-sm { font-size: 14px; width: 14px; height: 14px; animation: spin .7s linear infinite; }
 
-    /* Login form */
-    .login-form { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; }
-    .form-row { display: flex; }
+    /* OAuth waiting step */
+    .oauth-step {
+      margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px;
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .oauth-step-icon { color: var(--primary); }
+    .oauth-step-icon mat-icon { font-size: 20px; width: 20px; height: 20px; }
+    .spin-wrap { margin-top: 2px; }
+    .oauth-step-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .oauth-step-hint { font-size: 11px; color: var(--text-muted); }
+
+    /* Token section */
+    .token-section {
+      margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .token-step-banner {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; color: var(--success);
+    }
+    .token-step-banner mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+    .console-box {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 12px;
+    }
+    .console-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+    .console-cmd {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #0d1117; border-radius: 6px; padding: 8px 10px;
+      cursor: pointer; gap: 8px; transition: background .15s;
+    }
+    .console-cmd:hover { background: #161b22; }
+    .console-cmd code {
+      font-family: monospace; font-size: 13px; color: #7ee787;
+      flex: 1; user-select: all;
+    }
+    .copy-icon { font-size: 16px; width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; }
+    .console-hint { font-size: 11px; color: var(--text-muted); margin-top: 7px; }
+
+    .token-paste-row { display: flex; gap: 8px; }
     .form-input {
       flex: 1; height: 38px; border-radius: 8px;
       border: 1px solid var(--border); background: var(--surface-2);
@@ -210,50 +242,33 @@ const API = 'https://api.uufinds.com';
       padding: 0 12px; outline: none; transition: border-color .2s;
     }
     .form-input:focus { border-color: var(--primary); }
-    .captcha-row { display: flex; gap: 8px; align-items: center; }
-    .captcha-img {
-      height: 38px; border-radius: 6px; border: 1px solid var(--border);
-      cursor: pointer; object-fit: contain; background: white; min-width: 90px;
-    }
-    .captcha-placeholder {
-      width: 90px; height: 38px; border-radius: 6px; border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      background: var(--surface-2); cursor: pointer;
-    }
-    .captcha-placeholder mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--text-muted); }
-    .captcha-input { min-width: 0; }
-    .form-actions { display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
-    .login-error {
-      flex: 1; display: flex; align-items: center; gap: 5px;
-      font-size: 11px; color: var(--danger);
-    }
-    .login-error mat-icon { font-size: 14px; width: 14px; height: 14px; }
     .connect-btn {
-      height: 38px; padding: 0 18px; border-radius: 8px;
+      height: 38px; padding: 0 16px; border-radius: 8px;
       background: var(--primary); color: #12121f;
       border: none; cursor: pointer; font-size: 13px; font-weight: 700;
-      font-family: inherit; transition: opacity .2s;
-      display: flex; align-items: center; gap: 6px; white-space: nowrap;
+      font-family: inherit; white-space: nowrap;
     }
-    .connect-btn:disabled { opacity: .5; cursor: not-allowed; }
-    .connect-btn mat-icon { font-size: 16px; width: 16px; height: 16px; }
     :host-context([data-theme="light"]) .connect-btn { color: white; }
+    .open-uufinds-btn {
+      display: flex; align-items: center; gap: 6px; justify-content: center;
+      height: 36px; border-radius: 8px;
+      border: 1px solid var(--border); background: none;
+      color: var(--text-muted); font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all .2s;
+    }
+    .open-uufinds-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .open-uufinds-btn mat-icon { font-size: 15px; width: 15px; height: 15px; }
 
     /* Drop zone */
     .drop-zone {
       width: 100%; min-height: 200px; border-radius: var(--radius);
-      border: 2px dashed var(--border);
-      background: var(--surface);
+      border: 2px dashed var(--border); background: var(--surface);
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; position: relative; overflow: hidden;
-      transition: border-color .2s, background .2s;
-      margin-bottom: 16px;
+      transition: border-color .2s, background .2s; margin-bottom: 16px;
     }
-    .drop-zone:hover, .drop-zone.drag-over {
-      border-color: var(--primary); background: var(--primary-glow);
-    }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--primary); background: var(--primary-glow); }
     .drop-zone.has-image { border-style: solid; min-height: 240px; }
-
     .drop-placeholder { text-align: center; padding: 32px 16px; }
     .drop-icon-wrap {
       width: 64px; height: 64px; border-radius: 18px;
@@ -265,14 +280,11 @@ const API = 'https://api.uufinds.com';
     .drop-icon-wrap mat-icon { font-size: 30px; width: 30px; height: 30px; color: var(--primary); }
     .drop-label { margin: 0 0 6px; font-size: 15px; font-weight: 600; color: var(--text); }
     .drop-hint { margin: 0; font-size: 12px; color: var(--text-muted); }
-
     .preview-img { width: 100%; height: 100%; object-fit: contain; max-height: 320px; padding: 8px; }
     .preview-overlay {
-      position: absolute; inset: 0;
-      background: rgba(0,0,0,.45);
+      position: absolute; inset: 0; background: rgba(0,0,0,.45);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 8px; opacity: 0; transition: opacity .2s;
-      color: white; font-size: 13px; font-weight: 600;
+      gap: 8px; opacity: 0; transition: opacity .2s; color: white; font-size: 13px; font-weight: 600;
     }
     .preview-overlay mat-icon { font-size: 28px; width: 28px; height: 28px; }
     .drop-zone:hover .preview-overlay { opacity: 1; }
@@ -283,8 +295,7 @@ const API = 'https://api.uufinds.com';
       background: var(--primary); color: #12121f;
       border: none; cursor: pointer; font-size: 15px; font-weight: 700;
       display: flex; align-items: center; justify-content: center; gap: 8px;
-      font-family: inherit; margin-bottom: 24px;
-      box-shadow: var(--shadow-primary);
+      font-family: inherit; margin-bottom: 24px; box-shadow: var(--shadow-primary);
       transition: opacity .2s, transform .2s, box-shadow .2s;
     }
     .search-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 32px var(--primary-glow-lg); }
@@ -297,8 +308,7 @@ const API = 'https://api.uufinds.com';
     .site-card {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 16px;
-      display: flex; gap: 14px; align-items: flex-start;
-      transition: border-color .2s;
+      display: flex; gap: 14px; align-items: flex-start; transition: border-color .2s;
     }
     .site-card:hover { border-color: var(--border-primary); }
     .site-logo {
@@ -322,7 +332,7 @@ const API = 'https://api.uufinds.com';
     .spin { animation: spin .7s linear infinite; }
   `],
 })
-export class SearchComponent implements OnInit {
+export class SearchComponent implements OnInit, OnDestroy {
   private notify = inject(NotificationService);
 
   imageFile = signal<File | null>(null);
@@ -333,82 +343,115 @@ export class SearchComponent implements OnInit {
   uufindsToken = signal<string | null>(null);
   uufindsImageUrl = signal<string | null>(null);
 
-  // Login form
-  showLogin = signal(false);
-  loginEmail = '';
-  loginPassword = '';
-  captchaCode = '';
-  captchaImg = signal<string | null>(null);
-  captchaKey = '';
-  isLoggingIn = signal(false);
-  loginError = signal<string | null>(null);
+  // Connect flow
+  showConnect = signal(false);
+  oauthStep = signal<'waiting' | 'get-token'>('waiting');
+  isLoadingOAuth = signal(false);
+  pastedToken = '';
+  cmdCopied = signal(false);
+
+  private popupRef: Window | null = null;
+  private pollTimer: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit(): void {
     const saved = localStorage.getItem(UUFINDS_TOKEN_KEY);
     if (saved) this.uufindsToken.set(saved);
   }
 
-  toggleLoginForm(): void {
-    this.showLogin.update(v => !v);
-    if (this.showLogin()) this.loadCaptcha();
-    this.loginError.set(null);
+  ngOnDestroy(): void {
+    this.clearPoll();
   }
 
-  async loadCaptcha(): Promise<void> {
-    this.captchaImg.set(null);
-    this.captchaKey = Math.random().toString(36).substring(2) + Date.now();
+  async startGoogleLogin(): Promise<void> {
+    this.isLoadingOAuth.set(true);
     try {
-      const res = await fetch(`${API}/user/captcha/image/${this.captchaKey}`);
+      const res = await fetch(`${API}/oauth/google/url`);
       const json = await res.json();
-      if (json.success && json.message) {
-        this.captchaImg.set(json.message); // base64 data URI
-      }
+      const oauthUrl = json.result;
+      if (!oauthUrl) throw new Error('No URL');
+
+      this.showConnect.set(true);
+      this.oauthStep.set('waiting');
+      this.pastedToken = '';
+
+      this.popupRef = window.open(oauthUrl, 'uufinds_oauth',
+        'width=500,height=650,left=200,top=100');
+
+      // Poll for popup close
+      this.pollTimer = setInterval(() => {
+        if (this.popupRef?.closed) {
+          this.clearPoll();
+          this.oauthStep.set('get-token');
+          // Auto-open uufinds so user can open DevTools there
+          window.open('https://www.uufinds.com/qcfinds', 'uufinds_console');
+        }
+      }, 500);
+    } catch {
+      this.notify.notify('Błąd połączenia z uufinds');
+    } finally {
+      this.isLoadingOAuth.set(false);
+    }
+  }
+
+  cancelConnect(): void {
+    this.clearPoll();
+    this.popupRef?.close();
+    this.showConnect.set(false);
+  }
+
+  openUufinds(): void {
+    window.open('https://www.uufinds.com/qcfinds', 'uufinds_console');
+  }
+
+  async copyConsoleCmd(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText('copy(localStorage.USER_TOKEN)');
+      this.cmdCopied.set(true);
+      setTimeout(() => this.cmdCopied.set(false), 2000);
     } catch { /* ignore */ }
   }
 
-  async loginToUufinds(): Promise<void> {
-    if (!this.loginEmail || !this.loginPassword || !this.captchaCode) return;
-    this.isLoggingIn.set(true);
-    this.loginError.set(null);
+  onTokenPaste(value: string): void {
+    // Auto-save if pasted token looks like a JWT
+    if (value.startsWith('eyJ') && value.length > 50) {
+      // small delay to let ngModel update
+      setTimeout(() => this.saveToken(), 100);
+    }
+  }
+
+  async saveToken(): Promise<void> {
+    const t = this.pastedToken.trim();
+    if (!t) return;
+    // Validate token
     try {
-      const res = await fetch(`${API}/user/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: this.loginEmail,
-          password: this.loginPassword,
-          captcha: this.captchaCode,
-          checkKey: this.captchaKey,
-        }),
+      const res = await fetch(`${API}/user/info`, {
+        headers: { 'X-Access-Token': t }
       });
       const json = await res.json();
-      if (json.success && json.result?.token) {
-        const token = json.result.token;
-        localStorage.setItem(UUFINDS_TOKEN_KEY, token);
-        this.uufindsToken.set(token);
-        this.showLogin.set(false);
-        this.loginEmail = '';
-        this.loginPassword = '';
-        this.captchaCode = '';
-        this.notify.notify('Połączono z uufinds!');
-        const file = this.imageFile();
-        if (file) this.uploadToUufinds(file, token);
-      } else {
-        this.loginError.set(json.message || 'Błąd logowania');
-        this.captchaCode = '';
-        this.loadCaptcha();
+      if (!json.success) {
+        this.notify.notify('Nieprawidłowy token — spróbuj ponownie');
+        return;
       }
-    } catch {
-      this.loginError.set('Błąd połączenia z siecią');
-    } finally {
-      this.isLoggingIn.set(false);
-    }
+    } catch { /* proceed anyway */ }
+
+    localStorage.setItem(UUFINDS_TOKEN_KEY, t);
+    this.uufindsToken.set(t);
+    this.showConnect.set(false);
+    this.pastedToken = '';
+    this.notify.notify('Połączono z uufinds!');
+
+    const file = this.imageFile();
+    if (file) this.uploadToUufinds(file, t);
   }
 
   disconnect(): void {
     localStorage.removeItem(UUFINDS_TOKEN_KEY);
     this.uufindsToken.set(null);
     this.uufindsImageUrl.set(null);
+  }
+
+  private clearPoll(): void {
+    if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = null; }
   }
 
   onFileSelected(event: Event): void {
@@ -445,18 +488,14 @@ export class SearchComponent implements OnInit {
     this.uufindsImageUrl.set(null);
     try {
       const blob = await this.toJpegBlob(file);
-      const formData = new FormData();
-      formData.append('biz', 'mobile');
-      formData.append('file', blob, 'product.jpg');
+      const fd = new FormData();
+      fd.append('biz', 'mobile');
+      fd.append('file', blob, 'product.jpg');
       const res = await fetch(`${API}/sys/common/upload`, {
-        method: 'POST',
-        headers: { 'X-Access-Token': token },
-        body: formData,
+        method: 'POST', headers: { 'X-Access-Token': token }, body: fd,
       });
       const json = await res.json();
-      if (json.success && json.result?.url) {
-        this.uufindsImageUrl.set(json.result.url);
-      }
+      if (json.success && json.result?.url) this.uufindsImageUrl.set(json.result.url);
     } catch { /* ignore */ }
     finally { this.isUploading.set(false); }
   }
