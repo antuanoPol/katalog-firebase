@@ -27,11 +27,6 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../modals/confirm-
           <mat-icon class="sync-icon">{{ syncIcon() }}</mat-icon>
         </div>
 
-        <!-- Pippit.ai -->
-        <button class="icon-btn" (click)="openPippit()" title="Generuj zdjęcie produktu (Pippit.ai)">
-          <mat-icon>auto_awesome</mat-icon>
-        </button>
-
         <!-- Theme toggle -->
         <button class="icon-btn" (click)="theme.toggle()"
           [title]="theme.theme() === 'dark' ? 'Tryb jasny' : 'Tryb ciemny'">
@@ -158,10 +153,6 @@ export class TopbarComponent {
   data = inject(DataService);
   theme = inject(ThemeService);
   private dialog = inject(MatDialog);
-
-  openPippit(): void {
-    window.open('https://www.pippit.ai/agent-chat?tabName=product_photo&editType=sales_poster&entranceFrom=input_frame&agentMode=image', '_blank');
-  }
 
   avatarLetter() {
     return (this.auth.user()?.email?.[0] ?? '?').toUpperCase();
