@@ -82,7 +82,7 @@ import { Product } from '../../../core/models/catalog.models';
     </div>
   `,
   styles: [`
-    .detail-wrap { min-width: 320px; max-width: 480px; overflow: hidden; }
+    .detail-wrap { min-width: 320px; max-width: 480px; }
     .gallery { margin: -24px -24px 0; }
     .main-img-wrap { position: relative; background: #111; }
     .main-img { width: 100%; max-height: 320px; object-fit: contain; display: block; }
