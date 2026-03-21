@@ -85,33 +85,22 @@ import { Product } from '../../core/models/catalog.models';
   styles: [`
     .catalog-toolbar {
       display: flex; gap: 8px; padding: 12px 16px; flex-wrap: wrap;
-      background: rgba(5,5,10,.6);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: white; border-bottom: 1px solid #e0e0e0;
       position: sticky; top: 0; z-index: 9;
     }
     .select-toolbar { display: flex; align-items: center; gap: 8px; flex: 1; flex-wrap: wrap; }
-    .select-count {
-      font-weight: 700; color: #a78bfa; font-size: 13px; letter-spacing: .04em;
-      text-shadow: 0 0 12px rgba(167,139,250,.5);
-    }
+    .select-count { font-weight: 500; color: #1976d2; }
     .empty-state {
       display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 80px 24px; color: var(--text-muted);
-      animation: fadeIn .5s ease;
+      justify-content: center; padding: 80px 24px; color: rgba(0,0,0,.38);
     }
-    .empty-icon { font-size: 64px; width: 64px; height: 64px; margin-bottom: 16px; opacity: .15; }
+    .empty-icon { font-size: 64px; width: 64px; height: 64px; margin-bottom: 16px; opacity: .3; }
     .lightbox {
-      position: fixed; inset: 0; background: rgba(0,0,0,.92);
-      backdrop-filter: blur(8px);
+      position: fixed; inset: 0; background: rgba(0,0,0,.9);
       display: flex; align-items: center; justify-content: center;
-      z-index: 9999; cursor: zoom-out; animation: fadeIn .2s ease;
+      z-index: 9999; cursor: zoom-out;
     }
-    .lightbox img {
-      max-width: 95vw; max-height: 95vh; object-fit: contain;
-      border-radius: 16px; box-shadow: 0 0 60px rgba(124,58,237,.4);
-      animation: fadeUp .3s ease;
-    }
+    .lightbox img { max-width: 95vw; max-height: 95vh; object-fit: contain; border-radius: 8px; }
   `],
 })
 export class CatalogComponent {

@@ -71,30 +71,29 @@ import { AuthService } from '../../core/services/auth.service';
   `,
   styles: [`
     .auth-container {
-      display: flex; align-items: center; justify-content: center;
-      min-height: 100vh; padding: 16px; position: relative; z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+      background: #f5f5f5;
     }
     .auth-card {
-      width: 100%; max-width: 400px;
-      animation: fadeUp .6s cubic-bezier(.22,1,.36,1) both;
+      width: 100%;
+      max-width: 400px;
     }
-    mat-card-header { flex-direction: column; align-items: center; padding-bottom: 8px; }
-    .logo-icon {
-      font-size: 52px; width: 52px; height: 52px; margin-bottom: 12px;
-      color: #a78bfa; filter: drop-shadow(0 0 16px #7c3aed);
-      animation: pulse-glow 3s ease-in-out infinite;
+    mat-card-header {
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 8px;
     }
-    mat-card-title {
-      display: flex; flex-direction: column; align-items: center; font-size: 24px;
-      font-weight: 700; letter-spacing: .04em;
-      background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    mat-card-subtitle { text-align: center; margin-top: 6px; color: var(--text-muted) !important; font-size: 13px; }
+    .logo-icon { font-size: 48px; width: 48px; height: 48px; margin-bottom: 8px; }
+    mat-card-title { display: flex; flex-direction: column; align-items: center; font-size: 22px; }
+    mat-card-subtitle { text-align: center; margin-top: 4px; }
     .auth-form { display: flex; flex-direction: column; gap: 0; padding-top: 16px; }
     .full-width { width: 100%; }
-    .submit-btn { margin-top: 8px; height: 46px; font-weight: 700; letter-spacing: .08em; font-size: 14px; }
-    .auth-error { color: #f43f5e; font-size: 13px; margin: 4px 0 8px; animation: fadeUp .3s ease; }
+    .submit-btn { margin-top: 8px; height: 44px; }
+    .auth-error { color: #dc2626; font-size: 13px; margin: 4px 0 8px; }
     mat-spinner { margin: 0 auto; }
   `],
 })

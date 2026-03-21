@@ -52,9 +52,9 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/c
   styles: [`
     .empty-state {
       display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 80px 24px; color: var(--text-muted);
+      justify-content: center; padding: 80px 24px; color: rgba(0,0,0,.38);
     }
-    .empty-icon { font-size: 64px; width: 64px; height: 64px; margin-bottom: 16px; opacity: .2; }
+    .empty-icon { font-size: 64px; width: 64px; height: 64px; margin-bottom: 16px; opacity: .3; }
     .orders-header {
       display: flex; align-items: center; gap: 8px;
       padding: 16px 16px 0;

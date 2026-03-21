@@ -9,16 +9,11 @@ import { ProductItemComponent } from '../product-item/product-item.component';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/modals/confirm-dialog/confirm-dialog.component';
 
 const COLORS = [
-  { fg: '#a78bfa', bg: 'rgba(139,92,246,.12)' },
-  { fg: '#34d399', bg: 'rgba(52,211,153,.1)'  },
-  { fg: '#fb923c', bg: 'rgba(251,146,60,.1)'  },
-  { fg: '#f87171', bg: 'rgba(248,113,113,.1)' },
-  { fg: '#4ade80', bg: 'rgba(74,222,128,.1)'  },
-  { fg: '#e879f9', bg: 'rgba(232,121,249,.1)' },
-  { fg: '#38bdf8', bg: 'rgba(56,189,248,.1)'  },
-  { fg: '#facc15', bg: 'rgba(250,204,21,.1)'  },
-  { fg: '#f472b6', bg: 'rgba(244,114,182,.1)' },
-  { fg: '#2dd4bf', bg: 'rgba(45,212,191,.1)'  },
+  { fg: '#4338ca', bg: '#eef2ff' }, { fg: '#0d9488', bg: '#f0fdfa' },
+  { fg: '#d97706', bg: '#fffbeb' }, { fg: '#dc2626', bg: '#fef2f2' },
+  { fg: '#059669', bg: '#ecfdf5' }, { fg: '#7c3aed', bg: '#f5f3ff' },
+  { fg: '#db2777', bg: '#fdf2f8' }, { fg: '#2563eb', bg: '#eff6ff' },
+  { fg: '#b45309', bg: '#fefce8' }, { fg: '#0891b2', bg: '#ecfeff' },
 ];
 
 @Component({
@@ -67,24 +62,19 @@ const COLORS = [
     </div>
   `,
   styles: [`
-    .cat-group { border-bottom: 1px solid rgba(255,255,255,.04); }
+    .cat-group { border-bottom: 2px solid #e0e0e0; }
     .cat-header {
-      display: flex; align-items: center; padding: 6px 8px 6px 4px;
+      display: flex; align-items: center; padding: 4px 8px 4px 4px;
       position: sticky; top: 61px; z-index: 10;
-      background: rgba(5,5,10,.75);
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(255,255,255,.05);
-      transition: background .2s;
     }
-    .cat-header:hover { background: rgba(10,10,20,.85); }
-    .cat-name { font-weight: 700; font-size: 12px; flex: 1; letter-spacing: .06em; text-transform: uppercase; }
+    .cat-name { font-weight: 600; font-size: 14px; flex: 1; }
     .cat-count {
-      font-size: 10px; background: rgba(255,255,255,.08); border-radius: 20px;
-      padding: 2px 8px; margin-right: 4px; font-weight: 700;
+      font-size: 11px; background: rgba(0,0,0,.12); border-radius: 10px;
+      padding: 1px 7px; margin-right: 4px;
     }
     .cat-actions { display: flex; }
-    .collapse-btn { flex-shrink: 0; transition: transform .2s !important; }
-    .empty-cat { padding: 16px; font-size: 13px; color: var(--text-muted); font-style: italic; opacity: .6; }
+    .collapse-btn { flex-shrink: 0; }
+    .empty-cat { padding: 12px 16px; font-size: 13px; color: rgba(0,0,0,.38); font-style: italic; }
   `],
 })
 export class CategoryGroupComponent {

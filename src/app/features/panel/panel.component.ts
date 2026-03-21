@@ -96,14 +96,14 @@ interface PanelRow {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; padding: 80px 24px; color: rgba(0,0,0,.38);
     }
-    .empty-icon { font-size: 64px; width: 64px; height: 64px; margin-bottom: 16px; opacity: .15; }
-    .panel-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 8px 0; animation: fadeUp .3s ease; }
-    .panel-title { font-size: 16px; font-weight: 700; letter-spacing: .04em; color: var(--text); text-transform: uppercase; }
-    .panel-card { margin: 16px; animation: fadeUp .4s ease both; }
+    .empty-icon { font-size: 64px; width: 64px; height: 64px; margin-bottom: 16px; opacity: .3; }
+    .panel-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 8px 0; }
+    .panel-title { font-size: 16px; font-weight: 500; }
+    .panel-card { margin: 16px; }
     .table-wrap { overflow-x: auto; }
-    .total-row { font-weight: 700; background: rgba(124,58,237,.15) !important; }
-    .profit-pos { color: #10b981 !important; font-weight: 700; text-shadow: 0 0 8px rgba(16,185,129,.4); }
-    .profit-neg { color: #f43f5e !important; font-weight: 700; text-shadow: 0 0 8px rgba(244,63,94,.4); }
+    .total-row { font-weight: 700; background: #f5f5f5; }
+    .profit-pos { color: #059669; font-weight: 600; }
+    .profit-neg { color: #dc2626; font-weight: 600; }
   `],
 })
 export class PanelComponent {
