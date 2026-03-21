@@ -43,6 +43,7 @@ export interface SaleRecord {
   sellPrice: number;
   date: string; // YYYY-MM-DD
   platform: string;
+  orderId?: string; // set when created automatically from an order
 }
 
 export interface AppState {

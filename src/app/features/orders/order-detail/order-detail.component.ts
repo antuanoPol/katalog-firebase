@@ -1,4 +1,4 @@
-import { Component, input, inject, computed } from '@angular/core';
+import { Component, input, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -48,9 +48,38 @@ import { DataService } from '../../../core/services/data.service';
         </mat-form-field>
       </div>
 
+      <!-- Search & sort toolbar -->
+      <div class="table-toolbar">
+        <div class="search-box">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input class="search-input" [value]="searchQuery()"
+            (input)="searchQuery.set($any($event.target).value)"
+            placeholder="Szukaj produktu..." />
+          @if (searchQuery()) {
+            <button class="search-clear" (click)="searchQuery.set('')">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
+        <div class="sort-group">
+          <button class="sort-btn" [class.active]="sortField() === 'name'" (click)="setSort('name')">
+            Nazwa {{ sortField() === 'name' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
+          </button>
+          <button class="sort-btn" [class.active]="sortField() === 'price'" (click)="setSort('price')">
+            Cena {{ sortField() === 'price' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
+          </button>
+          <button class="sort-btn" [class.active]="sortField() === 'cost'" (click)="setSort('cost')">
+            Koszt {{ sortField() === 'cost' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
+          </button>
+          <button class="sort-btn" [class.active]="sortField() === 'profit'" (click)="setSort('profit')">
+            Zysk {{ sortField() === 'profit' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
+          </button>
+        </div>
+      </div>
+
       <!-- Table -->
       <div class="table-wrap">
-        <table mat-table [dataSource]="rows()" class="order-table">
+        <table mat-table [dataSource]="filteredRows()" class="order-table">
           <ng-container matColumnDef="no">
             <th mat-header-cell *matHeaderCellDef>#</th>
             <td mat-cell *matCellDef="let r; let i = index">{{ i + 1 }}</td>
@@ -145,6 +174,22 @@ import { DataService } from '../../../core/services/data.service';
     .profit-chip.negative { background: rgba(244,63,94,.12); color: #f43f5e; border: 1px solid rgba(244,63,94,.25); }
     .fee-inputs { display: flex; gap: 12px; padding: 12px 16px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
     .fee-inputs mat-form-field { flex: 1; min-width: 140px; }
+    .table-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+    .search-box {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0 10px; height: 34px;
+      flex: 1; min-width: 140px; max-width: 260px; transition: border-color .2s;
+    }
+    .search-box:focus-within { border-color: var(--border-amber); }
+    .search-icon { font-size: 16px; width: 16px; height: 16px; color: var(--text-muted); }
+    .search-input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: 13px; font-family: inherit; }
+    .search-clear { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; color: var(--text-muted); }
+    .search-clear mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    .sort-group { display: flex; gap: 4px; }
+    .sort-btn { padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .2s; }
+    .sort-btn.active { border-color: var(--border-amber); color: var(--primary); background: rgba(255,193,7,.08); }
+    .sort-btn:hover { border-color: var(--border-amber); color: var(--primary); }
     .table-wrap { overflow-x: auto; }
     .order-table { width: 100%; }
     .sell-field { width: 88px; }
@@ -165,6 +210,19 @@ import { DataService } from '../../../core/services/data.service';
 export class OrderDetailComponent {
   order = input.required<Order>();
   data = inject(DataService);
+
+  searchQuery = signal('');
+  sortField = signal<'name' | 'price' | 'cost' | 'profit'>('name');
+  sortDir = signal<'asc' | 'desc'>('asc');
+
+  setSort(field: 'name' | 'price' | 'cost' | 'profit'): void {
+    if (this.sortField() === field) {
+      this.sortDir.update(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortField.set(field);
+      this.sortDir.set('asc');
+    }
+  }
 
   displayedColumns = ['no', 'name', 'price', 'mass', 'delivery', 'other', 'cost', 'sell', 'profit'];
 
@@ -187,6 +245,20 @@ export class OrderDetailComponent {
         return { product, item: it, massPercent, deliveryShare, otherFeesShare, totalCost, profit };
       })
       .filter((r): r is OrderRowCalc => r !== null);
+  });
+
+  filteredRows = computed(() => {
+    const q = this.searchQuery().toLowerCase();
+    let result = q ? this.rows().filter(r => r.product.name.toLowerCase().includes(q)) : this.rows();
+    const dir = this.sortDir() === 'asc' ? 1 : -1;
+    return [...result].sort((a, b) => {
+      switch (this.sortField()) {
+        case 'name':   return dir * a.product.name.localeCompare(b.product.name);
+        case 'price':  return dir * (a.product.price - b.product.price);
+        case 'cost':   return dir * (a.totalCost - b.totalCost);
+        case 'profit': return dir * ((a.profit ?? -Infinity) - (b.profit ?? -Infinity));
+      }
+    });
   });
 
   totalBuy = computed(() => this.rows().reduce((s, r) => s + (r.product.price ?? 0), 0));

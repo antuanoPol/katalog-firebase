@@ -163,12 +163,50 @@ export class DataService {
   }
 
   updateSellPrice(orderId: string, prodId: string, value: number): void {
-    this.mutate(() => this.orders.update(orders =>
-      orders.map(o => o.id === orderId ? {
-        ...o,
-        items: o.items.map(it => it.prodId === prodId ? { ...it, sellPrice: value } : it)
-      } : o)
-    ));
+    this.mutate(() => {
+      // 1. Update the order item
+      this.orders.update(orders =>
+        orders.map(o => o.id === orderId ? {
+          ...o,
+          items: o.items.map(it => it.prodId === prodId ? { ...it, sellPrice: value } : it)
+        } : o)
+      );
+
+      // 2. Auto-manage sale record for this order+product
+      const ord = this.orders().find(o => o.id === orderId);
+      const prod = this.products().find(p => p.id === prodId);
+      if (!ord || !prod) return;
+
+      const prods = this.products();
+      const totalMass = ord.items.reduce((s, it) => s + (prods.find(x => x.id === it.prodId)?.mass ?? 0), 0);
+      const massRatio = totalMass > 0 ? (prod.mass ?? 0) / totalMass : 0;
+      const deliveryShare = (ord.delivery ?? 0) * massRatio;
+      const otherFeesShare = ord.items.length > 0 ? (ord.otherFees ?? 0) / ord.items.length : 0;
+      const totalCost = (prod.price ?? 0) + deliveryShare + otherFeesShare;
+
+      this.sales.update(sales => {
+        const idx = sales.findIndex(s => s.orderId === orderId && s.productId === prodId);
+        if (value <= 0) {
+          return idx >= 0 ? sales.filter((_, i) => i !== idx) : sales;
+        }
+        const record: SaleRecord = {
+          id: idx >= 0 ? sales[idx].id : crypto.randomUUID(),
+          productId: prodId,
+          productName: prod.name,
+          productCost: totalCost,
+          sellPrice: value,
+          date: idx >= 0 ? sales[idx].date : new Date().toISOString().slice(0, 10),
+          platform: idx >= 0 ? sales[idx].platform : 'Inne',
+          orderId,
+        };
+        if (idx >= 0) {
+          const next = [...sales];
+          next[idx] = record;
+          return next;
+        }
+        return [record, ...sales];
+      });
+    });
   }
 
   deleteOrder(id: string): void {
