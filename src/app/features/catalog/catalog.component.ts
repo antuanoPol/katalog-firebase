@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -101,6 +101,27 @@ import { Product } from '../../core/models/catalog.models';
         (duplicateProduct)="data.duplicateProduct($event.id)"
         (viewProduct)="openProductDetail($event)"
         (deleteCategory)="data.deleteCategory($event)"
+        (toggleSelect)="toggleSelect($event)"
+        (openLightbox)="lightboxSrc.set($event); showLightbox.set(true)"
+      />
+    }
+
+    <!-- Uncategorized products -->
+    @if (uncategorizedProducts().length > 0) {
+      <app-category-group
+        [category]="{ id: '', name: 'Bez kategorii', collapsed: false }"
+        [products]="uncategorizedProducts()"
+        [colorIndex]="data.categories().length"
+        [selectMode]="selectMode()"
+        [selectedIds]="selectedIds()"
+        [forceExpand]="!!searchQuery"
+        (toggleCollapse)="$event"
+        (addProduct)="openProductModal(null, '')"
+        (editProduct)="openProductModal($event, $event.catId)"
+        (deleteProduct)="onDeleteProduct($event)"
+        (duplicateProduct)="data.duplicateProduct($event.id)"
+        (viewProduct)="openProductDetail($event)"
+        (deleteCategory)="$event"
         (toggleSelect)="toggleSelect($event)"
         (openLightbox)="lightboxSrc.set($event); showLightbox.set(true)"
       />
@@ -225,6 +246,22 @@ export class CatalogComponent {
       this.sortDir = 'asc';
     }
   }
+
+  uncategorizedProducts = computed(() => {
+    const catIds = new Set(this.data.categories().map(c => c.id));
+    let prods = this.data.products().filter(p => !p.catId || !catIds.has(p.catId));
+    if (this.searchQuery) {
+      const q = this.searchQuery.toLowerCase();
+      prods = prods.filter(p => p.name.toLowerCase().includes(q) || p.desc?.toLowerCase().includes(q));
+    }
+    const dir = this.sortDir === 'asc' ? 1 : -1;
+    return [...prods].sort((a, b) => {
+      if (this.sortField === 'name') return dir * a.name.localeCompare(b.name);
+      if (this.sortField === 'price') return dir * (a.price - b.price);
+      if (this.sortField === 'mass') return dir * (a.mass - b.mass);
+      return 0;
+    });
+  });
 
   productsForCat(catId: string) {
     let prods = this.data.products().filter(p => p.catId === catId);

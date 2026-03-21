@@ -33,6 +33,7 @@ export interface ProductModalData {
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Kategoria</mat-label>
           <mat-select formControlName="catId">
+            <mat-option value="">— Bez kategorii —</mat-option>
             @for (cat of data.categories(); track cat.id) {
               <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
             }
@@ -162,7 +163,7 @@ export class ProductModalComponent implements OnInit {
   images = signal<string[]>([]);
 
   form = this.fb.group({
-    catId: ['', Validators.required],
+    catId: [''],
     name: ['', Validators.required],
     price: [0],
     mass: [0],
@@ -178,8 +179,6 @@ export class ProductModalComponent implements OnInit {
       this.images.set(existing);
     } else if (this.dialogData.defaultCatId) {
       this.form.patchValue({ catId: this.dialogData.defaultCatId });
-    } else if (this.data.categories().length > 0) {
-      this.form.patchValue({ catId: this.data.categories()[0].id });
     }
   }
 

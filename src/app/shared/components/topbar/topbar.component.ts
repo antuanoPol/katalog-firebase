@@ -19,7 +19,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../modals/confirm-
         <div class="brand-icon">
           <mat-icon>inventory_2</mat-icon>
         </div>
-        <span class="brand-name">Katalog</span>
+        <span class="brand-name">Vinted_Katalog</span>
       </div>
 
       <div class="topbar-right">

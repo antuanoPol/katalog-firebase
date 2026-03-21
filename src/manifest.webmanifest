@@ -1,7 +1,7 @@
 {
-  "name": "Katalog Produktów",
-  "short_name": "Katalog",
-  "description": "Katalog produktów z synchronizacją",
+  "name": "Vinted_Katalog",
+  "short_name": "Vinted_Katalog",
+  "description": "Katalog produktów Vinted z synchronizacją",
   "theme_color": "#3f51b5",
   "background_color": "#0f172a",
   "display": "standalone",
