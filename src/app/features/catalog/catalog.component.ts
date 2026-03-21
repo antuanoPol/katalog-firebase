@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import { DataService } from '../../core/services/data.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { CategoryGroupComponent } from './category-group/category-group.component';
+import { ProductItemComponent } from './product-item/product-item.component';
 import { CategoryModalComponent } from '../../shared/modals/category-modal/category-modal.component';
 import { ProductModalComponent, ProductModalData } from '../../shared/modals/product-modal/product-modal.component';
 import { OrderModalComponent, OrderModalData } from '../../shared/modals/order-modal/order-modal.component';
@@ -18,7 +19,7 @@ import { Product } from '../../core/models/catalog.models';
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, CategoryGroupComponent],
+  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, CategoryGroupComponent, ProductItemComponent],
   template: `
     <!-- Toolbar -->
     <div class="catalog-toolbar">
@@ -110,22 +111,16 @@ import { Product } from '../../core/models/catalog.models';
       />
     }
 
-    <!-- Uncategorized products -->
-    @if (uncategorizedProducts().length > 0) {
-      <app-category-group
-        [category]="{ id: '', name: 'Bez kategorii', collapsed: false }"
-        [products]="uncategorizedProducts()"
-        [colorIndex]="data.categories().length"
+    <!-- Uncategorized products — displayed individually without a group header -->
+    @for (product of uncategorizedProducts(); track product.id) {
+      <app-product-item
+        [product]="product"
         [selectMode]="selectMode()"
-        [selectedIds]="selectedIds()"
-        [forceExpand]="!!searchQuery"
-        (toggleCollapse)="$event"
-        (addProduct)="openProductModal(null, '')"
-        (editProduct)="openProductModal($event, $event.catId)"
-        (deleteProduct)="onDeleteProduct($event)"
-        (duplicateProduct)="data.duplicateProduct($event.id)"
-        (viewProduct)="openProductDetail($event)"
-        (deleteCategory)="$event"
+        [selected]="selectedIds().has(product.id)"
+        (view)="openProductDetail($event)"
+        (edit)="openProductModal($event, $event.catId)"
+        (delete)="onDeleteProduct($event)"
+        (duplicate)="data.duplicateProduct($event.id)"
         (toggleSelect)="toggleSelect($event)"
         (openLightbox)="lightboxSrc.set($event); showLightbox.set(true)"
       />
