@@ -22,6 +22,8 @@ interface MonthStat {
   template: `
     <div class="history-page">
 
+      <!-- Sticky header: toolbar + stats -->
+      <div class="h-sticky-top">
       <!-- Toolbar -->
       <div class="h-toolbar">
         <span class="h-title">Historia sprzedaży</span>
@@ -67,6 +69,7 @@ interface MonthStat {
           <div class="stat-label">Transakcji</div>
         </div>
       </div>
+      </div><!-- /h-sticky-top -->
 
       <!-- Monthly chart -->
       @if (monthStats().length > 0) {
@@ -124,11 +127,14 @@ interface MonthStat {
   `,
   styles: [`
     .history-page { padding-bottom: 80px; animation: fadeUp .3s ease; }
+    .h-sticky-top {
+      position: sticky; top: 0; z-index: 9;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
     .h-toolbar {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      padding: 12px 16px; background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      position: sticky; top: 0; z-index: 9;
+      padding: 12px 16px;
     }
     .h-title { font-size: 16px; font-weight: 700; color: var(--text); margin-right: 4px; }
     .search-box {
@@ -147,11 +153,11 @@ interface MonthStat {
     .sort-btn.active { border-color: var(--border-amber); color: var(--primary); background: rgba(255,193,7,.08); }
     .sort-btn:hover { border-color: var(--border-amber); color: var(--primary); }
     .empty-hint { font-size: 12px; color: var(--text-muted); margin: 0; }
-    .stats-row { display: flex; gap: 12px; padding: 16px; flex-wrap: wrap; }
+    .stats-row { display: flex; gap: 10px; padding: 12px 16px; flex-wrap: wrap; border-top: 1px solid var(--border); }
     .stat-card {
-      flex: 1; min-width: 100px; background: var(--surface-2);
+      flex: 1; min-width: 90px; background: var(--surface-2);
       border: 1px solid var(--border); border-radius: 12px;
-      padding: 16px; text-align: center;
+      padding: 12px 10px; text-align: center;
     }
     .stat-card.profit { border-color: rgba(74,222,128,.3); }
     .stat-val { font-size: 22px; font-weight: 800; color: var(--primary); }

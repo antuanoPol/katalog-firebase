@@ -25,9 +25,12 @@ import { TabBarComponent } from './shared/components/tab-bar/tab-bar.component';
     }
   `,
   styles: [`
-    .app-shell { display: flex; flex-direction: column; height: 100dvh; background: var(--bg); }
-    .shell-body { flex: 1; display: flex; min-height: 0; }
-    .content { flex: 1; overflow-y: auto; padding-bottom: 72px; }
+    .app-shell { display: flex; flex-direction: column; height: 100dvh; background: var(--bg); overflow: hidden; }
+    .shell-body { flex: 1; display: flex; min-height: 0; overflow: hidden; }
+    .content { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 72px; }
+    @media (max-width: 767px) {
+      app-tab-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; width: 0; height: 0; overflow: visible; }
+    }
     @media (min-width: 768px) {
       .content { padding-bottom: 0; }
     }

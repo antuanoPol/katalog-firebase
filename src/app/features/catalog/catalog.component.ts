@@ -140,7 +140,7 @@ import { Product } from '../../core/models/catalog.models';
   `,
   styles: [`
     .catalog-toolbar {
-      display: flex; gap: 8px; padding: 12px 16px; flex-wrap: wrap;
+      display: flex; gap: 8px; padding: 10px 12px; flex-wrap: wrap;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 9;
@@ -172,6 +172,12 @@ import { Product } from '../../core/models/catalog.models';
     .toolbar-right {
       display: flex; align-items: center; gap: 6px; flex: 1;
       justify-content: flex-end; flex-wrap: wrap;
+    }
+    @media (max-width: 767px) {
+      .catalog-toolbar { padding: 8px 10px; gap: 6px; }
+      .tool-btn { padding: 7px 12px; font-size: 12px; }
+      .toolbar-right { flex-basis: 100%; justify-content: flex-start; }
+      .search-box { flex: 1; max-width: 100%; min-width: 0; }
     }
     .prod-count-chip {
       font-size: 11px; font-weight: 700;
