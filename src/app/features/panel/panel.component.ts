@@ -1,8 +1,10 @@
 import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
 import { DataService } from '../../core/services/data.service';
 
 interface PanelRow {
@@ -20,8 +22,14 @@ interface PanelRow {
 @Component({
   selector: 'app-panel',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatIconModule, MatCardModule],
+  imports: [CommonModule, RouterLink, MatTableModule, MatIconModule, MatCardModule, MatButtonModule],
   template: `
+    <div class="panel-toolbar">
+      <button mat-icon-button routerLink="/orders" title="Wróć do zamówień">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <span class="panel-title">Panel statystyk</span>
+    </div>
     @if (data.orders().length === 0) {
       <div class="empty-state">
         <mat-icon class="empty-icon">bar_chart</mat-icon>
@@ -89,6 +97,8 @@ interface PanelRow {
       justify-content: center; padding: 80px 24px; color: rgba(0,0,0,.38);
     }
     .empty-icon { font-size: 64px; width: 64px; height: 64px; margin-bottom: 16px; opacity: .3; }
+    .panel-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 8px 0; }
+    .panel-title { font-size: 16px; font-weight: 500; }
     .panel-card { margin: 16px; }
     .table-wrap { overflow-x: auto; }
     .total-row { font-weight: 700; background: #f5f5f5; }

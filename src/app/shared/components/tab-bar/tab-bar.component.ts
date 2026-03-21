@@ -19,10 +19,6 @@ import { DataService } from '../../../core/services/data.service';
         <mat-icon [matBadge]="data.orderCount() || null" matBadgeSize="small">local_shipping</mat-icon>
         Zamówienia
       </a>
-      <a routerLink="/panel" routerLinkActive="active-tab" class="tab-link">
-        <mat-icon>bar_chart</mat-icon>
-        Panel
-      </a>
     </nav>
   `,
   styles: [`

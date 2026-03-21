@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,7 +13,7 @@ import { OrderDetailComponent } from './order-detail/order-detail.component';
   selector: 'app-orders',
   standalone: true,
   imports: [
-    CommonModule, MatSelectModule, MatFormFieldModule,
+    CommonModule, RouterLink, MatSelectModule, MatFormFieldModule,
     MatButtonModule, MatIconModule, OrderDetailComponent,
   ],
   template: `
@@ -36,6 +37,9 @@ import { OrderDetailComponent } from './order-detail/order-detail.component';
             <mat-icon>delete</mat-icon>
           </button>
         }
+        <button mat-icon-button routerLink="/panel" title="Panel statystyk">
+          <mat-icon>bar_chart</mat-icon>
+        </button>
       </div>
 
       @if (selectedOrder()) {

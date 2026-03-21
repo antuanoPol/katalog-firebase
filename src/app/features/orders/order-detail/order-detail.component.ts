@@ -1,6 +1,5 @@
 import { Component, input, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -9,13 +8,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { Order, OrderRowCalc } from '../../../core/models/catalog.models';
 import { DataService } from '../../../core/services/data.service';
-import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
   selector: 'app-order-detail',
   standalone: true,
   imports: [
-    CommonModule, FormsModule,
+    CommonModule,
     MatCardModule, MatFormFieldModule, MatInputModule,
     MatTableModule, MatIconModule, MatButtonModule,
   ],
@@ -35,13 +33,13 @@ import { NotificationService } from '../../../core/services/notification.service
       <div class="fee-inputs">
         <mat-form-field appearance="outline">
           <mat-label>✈ Dostawa (zł)</mat-label>
-          <input matInput type="number" [ngModel]="order().delivery"
-            (ngModelChange)="data.updateOrderFee(order().id, 'delivery', +$event)" />
+          <input matInput type="number" [value]="order().delivery"
+            (change)="data.updateOrderFee(order().id, 'delivery', +$any($event.target).value)" />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>📋 Inne opłaty (zł)</mat-label>
-          <input matInput type="number" [ngModel]="order().otherFees"
-            (ngModelChange)="data.updateOrderFee(order().id, 'otherFees', +$event)" />
+          <input matInput type="number" [value]="order().otherFees"
+            (change)="data.updateOrderFee(order().id, 'otherFees', +$any($event.target).value)" />
         </mat-form-field>
       </div>
 
@@ -80,9 +78,9 @@ import { NotificationService } from '../../../core/services/notification.service
             <th mat-header-cell *matHeaderCellDef>Sprzedaż 🟢</th>
             <td mat-cell *matCellDef="let r">
               <mat-form-field appearance="outline" class="sell-field">
-                <input matInput type="number" [ngModel]="r.item.sellPrice || null"
+                <input matInput type="number" [value]="r.item.sellPrice || ''"
                   placeholder="0.00"
-                  (ngModelChange)="data.updateSellPrice(order().id, r.product.id, +$event)" />
+                  (change)="data.updateSellPrice(order().id, r.product.id, +$any($event.target).value)" />
               </mat-form-field>
             </td>
           </ng-container>
@@ -144,7 +142,6 @@ import { NotificationService } from '../../../core/services/notification.service
 export class OrderDetailComponent {
   order = input.required<Order>();
   data = inject(DataService);
-  private notify = inject(NotificationService);
 
   displayedColumns = ['no', 'name', 'price', 'mass', 'delivery', 'other', 'cost', 'sell', 'profit'];
 
