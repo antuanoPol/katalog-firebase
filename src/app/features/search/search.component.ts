@@ -222,16 +222,18 @@ export class SearchComponent {
     if (!file) return;
     this.isSearching.set(true);
 
+    // Otwieramy OBA okna synchronicznie – musi być przed operacją async,
+    // żeby Chrome nie zablokował drugiego okna jako popup
+    window.open('https://www.uufinds.com/qcfinds', '_blank');
+    window.open('https://www.kakobuy.com/', '_blank');
+
     try {
       const blob = await this.toPngBlob(file);
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      this.notify.notify('Obraz w schowku — wklej Ctrl+V na uufinds!');
+      this.notify.notify('Obie strony otwarte! Wklej Ctrl+V na uufinds.');
     } catch {
-      this.notify.notify('Schowek niedostępny — wklej obraz ręcznie');
+      this.notify.notify('Obie strony otwarte — skopiuj obraz ręcznie.');
     }
-
-    window.open('https://www.uufinds.com/qcfinds', '_blank');
-    setTimeout(() => window.open('https://www.kakobuy.com/', '_blank'), 300);
 
     this.isSearching.set(false);
   }
