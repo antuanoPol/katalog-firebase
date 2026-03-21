@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(md|js|ts|html|css|json\\)$\")",
+      "Bash(find /c/Users/balce/projekty/katalog-firebase -type f ! -path \"*/.git/*\" -exec ls -lh {})",
+      "Read(//c/Users/balce/projekty/katalog-firebase/**)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npm --version)",
+      "Bash(npx @angular/cli@17 version)",
+      "Bash(npx @angular/cli@17 new katalog-firebase --directory . --standalone --routing --style css --skip-git --skip-tests)",
+      "Bash(npm install:*)",
+      "Bash(npx ng:*)",
+      "Bash(npm view:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:4200)",
+      "mcp__playwright__browser_navigate"
+    ]
+  }
+}
