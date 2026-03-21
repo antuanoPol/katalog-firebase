@@ -1,0 +1,5 @@
+[      70ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:4200/login:0
+[     286ms] [WARNING] Detected a matBadge on an "aria-hidden" "<mat-icon>". Consider setting aria-hidden="false" in order to surface the information assistive technology.
+<mat-icon _ngcontent-ng-c74566198="" role="img" matbadgesize="small" class="mat-icon notranslate mat-badge" aria-hidden="true"></mat-icon> @ http://localhost:4200/@fs/c:/Users/balce/projekty/katalog-firebase/.angular/cache/17.3.17/vite/deps/@angular_material_badge.js?v=afd65e24:138
+[     286ms] [WARNING] Detected a matBadge on an "aria-hidden" "<mat-icon>". Consider setting aria-hidden="false" in order to surface the information assistive technology.
+<mat-icon _ngcontent-ng-c74566198="" role="img" matbadgesize="small" class="mat-icon notranslate mat-badge" aria-hidden="true"></mat-icon> @ http://localhost:4200/@fs/c:/Users/balce/projekty/katalog-firebase/.angular/cache/17.3.17/vite/deps/@angular_material_badge.js?v=afd65e24:138

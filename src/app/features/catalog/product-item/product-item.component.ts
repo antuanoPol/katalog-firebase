@@ -32,7 +32,7 @@ import { Product } from '../../../core/models/catalog.models';
           }
         </div>
         @if (product().desc) {
-          <div class="prod-desc">{{ product().desc }}</div>
+          <div class="prod-desc">{{ product().desc | slice:0:100 }}{{ product().desc.length > 100 ? '…' : '' }}</div>
         }
       </div>
 
@@ -69,10 +69,7 @@ import { Product } from '../../../core/models/catalog.models';
     .prod-meta { font-size: 12px; color: rgba(0,0,0,.54); margin-top: 2px; }
     .prod-price { font-weight: 500; color: #1976d2; }
     .prod-mass { margin-left: 4px; }
-    .prod-desc {
-      font-size: 12px; color: rgba(0,0,0,.6); margin-top: 4px;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    }
+    .prod-desc { font-size: 12px; color: rgba(0,0,0,.6); margin-top: 4px; }
     .prod-actions { display: flex; }
   `],
 })
