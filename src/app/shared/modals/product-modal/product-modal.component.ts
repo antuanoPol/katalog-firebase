@@ -43,25 +43,25 @@ export interface ProductModalData {
         <div class="imgs-section">
           <div class="imgs-label">Zdjęcia ({{ images().length }})</div>
           <div class="imgs-list">
-            @for (img of images(); track img; let i = $index) {
+            @for (img of images(); track img) {
               <div class="img-item">
                 <img [src]="img" class="img-thumb" />
                 <div class="img-item-actions">
-                  @if (i > 0) {
-                    <button mat-icon-button type="button" (click)="moveImg(i, -1)" class="img-act-btn">
+                  @if ($index > 0) {
+                    <button mat-icon-button type="button" (click)="moveImg($index, -1)" class="img-act-btn">
                       <mat-icon>arrow_back</mat-icon>
                     </button>
                   }
-                  @if (i < images().length - 1) {
-                    <button mat-icon-button type="button" (click)="moveImg(i, 1)" class="img-act-btn">
+                  @if ($index < images().length - 1) {
+                    <button mat-icon-button type="button" (click)="moveImg($index, 1)" class="img-act-btn">
                       <mat-icon>arrow_forward</mat-icon>
                     </button>
                   }
-                  <button mat-icon-button type="button" (click)="removeImg(i)" class="img-act-btn danger">
+                  <button mat-icon-button type="button" (click)="removeImg($index)" class="img-act-btn danger">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
-                @if (i === 0) {
+                @if ($index === 0) {
                   <span class="img-main-badge">Główne</span>
                 }
               </div>
