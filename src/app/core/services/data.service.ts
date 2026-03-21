@@ -180,7 +180,7 @@ export class DataService {
       try {
         const data: AppState = JSON.parse(e.target!.result as string);
         if (!data.categories || !data.products || !data.orders) throw new Error();
-        if (!confirm('Zastąpić bieżące dane importem?')) return;
+        // confirmation handled by caller
         this.mutate(() => this.applyState(data));
         this.notify.notify('Import OK');
       } catch {

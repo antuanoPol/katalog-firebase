@@ -4,8 +4,10 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatDialog } from '@angular/material/dialog';
 import { AuthService } from '../../../core/services/auth.service';
 import { DataService } from '../../../core/services/data.service';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../modals/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-topbar',
@@ -62,6 +64,7 @@ import { DataService } from '../../../core/services/data.service';
 export class TopbarComponent {
   auth = inject(AuthService);
   data = inject(DataService);
+  private dialog = inject(MatDialog);
 
   syncTitle() {
     const map = { online: 'Połączono z chmurą', syncing: 'Synchronizacja...', offline: 'Brak połączenia' };
@@ -79,8 +82,12 @@ export class TopbarComponent {
   }
 
   onImportFile(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (file) this.data.importJson(file);
-    (event.target as HTMLInputElement).value = '';
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const data: ConfirmDialogData = { message: 'Zastąpić bieżące dane importem?', confirmLabel: 'Importuj' };
+    this.dialog.open(ConfirmDialogComponent, { width: '320px', data })
+      .afterClosed().subscribe(ok => { if (ok) this.data.importJson(file); });
+    input.value = '';
   }
 }

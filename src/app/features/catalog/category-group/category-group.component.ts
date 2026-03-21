@@ -1,10 +1,12 @@
-import { Component, input, output, computed } from '@angular/core';
+import { Component, input, output, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { Category, Product } from '../../../core/models/catalog.models';
 import { ProductItemComponent } from '../product-item/product-item.component';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/modals/confirm-dialog/confirm-dialog.component';
 
 const COLORS = [
   { fg: '#4338ca', bg: '#eef2ff' }, { fg: '#0d9488', bg: '#f0fdfa' },
@@ -90,6 +92,7 @@ export class CategoryGroupComponent {
   toggleSelect = output<string>();
   openLightbox = output<string>();
 
+  private dialog = inject(MatDialog);
   color = computed(() => COLORS[this.colorIndex() % COLORS.length]);
 
   onDelete(): void {
@@ -97,6 +100,8 @@ export class CategoryGroupComponent {
     const msg = count > 0
       ? `Usunąć "${this.category().name}" z ${count} produktami?`
       : `Usunąć "${this.category().name}"?`;
-    if (confirm(msg)) this.deleteCategory.emit(this.category().id);
+    const data: ConfirmDialogData = { message: msg };
+    this.dialog.open(ConfirmDialogComponent, { width: '320px', data })
+      .afterClosed().subscribe(ok => { if (ok) this.deleteCategory.emit(this.category().id); });
   }
 }

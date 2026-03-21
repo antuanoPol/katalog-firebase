@@ -10,6 +10,7 @@ import { CategoryGroupComponent } from './category-group/category-group.componen
 import { CategoryModalComponent } from '../../shared/modals/category-modal/category-modal.component';
 import { ProductModalComponent, ProductModalData } from '../../shared/modals/product-modal/product-modal.component';
 import { OrderModalComponent, OrderModalData } from '../../shared/modals/order-modal/order-modal.component';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/confirm-dialog/confirm-dialog.component';
 import { Product } from '../../core/models/catalog.models';
 
 @Component({
@@ -128,10 +129,11 @@ export class CatalogComponent {
 
   onDeleteProduct(id: string): void {
     const p = this.data.products().find(x => x.id === id);
-    if (confirm(`Usunąć "${p?.name}"?`)) {
-      this.data.deleteProduct(id);
-      this.notify.notify('Usunięto');
-    }
+    const data: ConfirmDialogData = { message: `Usunąć "${p?.name}"?` };
+    this.dialog.open(ConfirmDialogComponent, { width: '320px', data })
+      .afterClosed().subscribe(ok => {
+        if (ok) { this.data.deleteProduct(id); this.notify.notify('Usunięto'); }
+      });
   }
 
   openCategoryModal(): void {

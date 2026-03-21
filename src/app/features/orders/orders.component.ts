@@ -5,9 +5,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { DataService } from '../../core/services/data.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { OrderDetailComponent } from './order-detail/order-detail.component';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-orders',
@@ -63,6 +65,7 @@ import { OrderDetailComponent } from './order-detail/order-detail.component';
 export class OrdersComponent {
   data = inject(DataService);
   private notify = inject(NotificationService);
+  private dialog = inject(MatDialog);
 
   selectedOrderId = signal('');
 
@@ -73,10 +76,10 @@ export class OrdersComponent {
   onDelete(): void {
     const order = this.selectedOrder();
     if (!order) return;
-    if (confirm(`Usunąć zamówienie "${order.name}"?`)) {
-      this.data.deleteOrder(order.id);
-      this.selectedOrderId.set('');
-      this.notify.notify('Usunięto');
-    }
+    const data: ConfirmDialogData = { message: `Usunąć zamówienie "${order.name}"?` };
+    this.dialog.open(ConfirmDialogComponent, { width: '320px', data })
+      .afterClosed().subscribe(ok => {
+        if (ok) { this.data.deleteOrder(order.id); this.selectedOrderId.set(''); this.notify.notify('Usunięto'); }
+      });
   }
 }
