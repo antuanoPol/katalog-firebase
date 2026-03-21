@@ -26,6 +26,9 @@ import { Product } from '../../core/models/catalog.models';
         <button class="tool-btn primary" (click)="openProductModal(null, '')">
           <mat-icon>add</mat-icon> Produkt
         </button>
+        @if (data.products().length > 0) {
+          <span class="prod-count-chip">{{ data.products().length }}</span>
+        }
         <button class="tool-btn ghost" (click)="openCategoryModal()">
           <mat-icon>create_new_folder</mat-icon> Kategoria
         </button>
@@ -165,6 +168,11 @@ import { Product } from '../../core/models/catalog.models';
       border: 1px solid var(--border-amber);
     }
     .tool-btn.amber:hover { background: rgba(255,193,7,.18); }
+    .prod-count-chip {
+      font-size: 11px; font-weight: 700; color: var(--text-muted);
+      background: var(--surface-2); border: 1px solid var(--border);
+      padding: 3px 9px; border-radius: 20px; letter-spacing: .04em;
+    }
     .select-toolbar { display: flex; align-items: center; gap: 8px; flex: 1; flex-wrap: wrap; }
     .select-badge {
       font-weight: 700; color: var(--primary); font-size: 13px; letter-spacing: .04em;

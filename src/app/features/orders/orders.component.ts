@@ -29,6 +29,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/c
       </div>
     } @else {
       <div class="orders-header">
+        <span class="order-count-chip">{{ data.orders().length }}</span>
         <mat-form-field appearance="outline" class="order-select">
           <mat-label>Wybierz zamówienie</mat-label>
           <mat-select [value]="selectedOrderId()" (valueChange)="selectedOrderId.set($event)">
@@ -79,6 +80,12 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/c
     .btn-danger { color: var(--danger) !important; }
     .btn-panel { color: var(--primary) !important; }
     .opt-count { color: var(--text-muted); font-size: 11px; }
+    .order-count-chip {
+      font-size: 11px; font-weight: 700; color: var(--text-muted);
+      background: var(--surface-2); border: 1px solid var(--border);
+      padding: 3px 9px; border-radius: 20px; letter-spacing: .04em;
+      white-space: nowrap; align-self: center;
+    }
   `],
 })
 export class OrdersComponent {
