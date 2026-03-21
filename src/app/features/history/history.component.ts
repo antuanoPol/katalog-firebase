@@ -1,11 +1,10 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { DataService } from '../../core/services/data.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/confirm-dialog/confirm-dialog.component';
-import { SaleModalComponent } from '../../shared/modals/sale-modal/sale-modal.component';
 import { SaleRecord } from '../../core/models/catalog.models';
 
 interface MonthStat {
@@ -26,9 +25,31 @@ interface MonthStat {
       <!-- Toolbar -->
       <div class="h-toolbar">
         <span class="h-title">Historia sprzedaży</span>
-        <button class="tool-btn primary" (click)="openSaleModal()">
-          <mat-icon>add</mat-icon> Dodaj sprzedaż
-        </button>
+        <div class="search-box">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input class="search-input" [value]="searchQuery()"
+            (input)="searchQuery.set($any($event.target).value)"
+            placeholder="Szukaj produktu..." />
+          @if (searchQuery()) {
+            <button class="search-clear" (click)="searchQuery.set('')">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
+        <div class="sort-group">
+          <button class="sort-btn" [class.active]="sortField() === 'date'" (click)="setSort('date')">
+            Data {{ sortField() === 'date' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
+          </button>
+          <button class="sort-btn" [class.active]="sortField() === 'name'" (click)="setSort('name')">
+            Nazwa {{ sortField() === 'name' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
+          </button>
+          <button class="sort-btn" [class.active]="sortField() === 'price'" (click)="setSort('price')">
+            Cena {{ sortField() === 'price' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
+          </button>
+          <button class="sort-btn" [class.active]="sortField() === 'profit'" (click)="setSort('profit')">
+            Zysk {{ sortField() === 'profit' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
+          </button>
+        </div>
       </div>
 
       <!-- Stats cards -->
@@ -73,9 +94,7 @@ interface MonthStat {
         <div class="empty-state">
           <mat-icon>point_of_sale</mat-icon>
           <p>Brak zapisanych sprzedaży</p>
-          <button class="tool-btn primary" (click)="openSaleModal()">
-            <mat-icon>add</mat-icon> Dodaj pierwszą sprzedaż
-          </button>
+          <p class="empty-hint">Uzupełnij cenę sprzedaży w zakładce Zamówienia</p>
         </div>
       } @else {
         <div class="sales-list">
@@ -106,21 +125,28 @@ interface MonthStat {
   styles: [`
     .history-page { padding-bottom: 80px; animation: fadeUp .3s ease; }
     .h-toolbar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px; background: var(--surface);
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 12px 16px; background: var(--surface);
       border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 9;
     }
-    .h-title { font-size: 16px; font-weight: 700; color: var(--text); }
-    .tool-btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 16px; border-radius: 10px; border: none;
-      font-size: 13px; font-weight: 600; cursor: pointer;
-      font-family: inherit; transition: all .2s;
+    .h-title { font-size: 16px; font-weight: 700; color: var(--text); margin-right: 4px; }
+    .search-box {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0 10px; height: 36px;
+      flex: 1; min-width: 140px; max-width: 260px; transition: border-color .2s;
     }
-    .tool-btn mat-icon { font-size: 16px; width: 16px; height: 16px; }
-    .tool-btn.primary { background: var(--primary); color: #12121f; box-shadow: 0 0 16px rgba(255,193,7,.3); }
-    .tool-btn.primary:hover { box-shadow: 0 0 28px rgba(255,193,7,.5); transform: translateY(-1px); }
+    .search-box:focus-within { border-color: var(--border-amber); }
+    .search-icon { font-size: 16px; width: 16px; height: 16px; color: var(--text-muted); }
+    .search-input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: 13px; font-family: inherit; }
+    .search-clear { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; color: var(--text-muted); }
+    .search-clear mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    .sort-group { display: flex; gap: 4px; }
+    .sort-btn { padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .2s; }
+    .sort-btn.active { border-color: var(--border-amber); color: var(--primary); background: rgba(255,193,7,.08); }
+    .sort-btn:hover { border-color: var(--border-amber); color: var(--primary); }
+    .empty-hint { font-size: 12px; color: var(--text-muted); margin: 0; }
     .stats-row { display: flex; gap: 12px; padding: 16px; flex-wrap: wrap; }
     .stat-card {
       flex: 1; min-width: 100px; background: var(--surface-2);
@@ -166,12 +192,37 @@ export class HistoryComponent {
   data = inject(DataService);
   private dialog = inject(MatDialog);
 
+  searchQuery = signal('');
+  sortField = signal<'date' | 'name' | 'price' | 'profit'>('date');
+  sortDir = signal<'asc' | 'desc'>('desc');
+
+  setSort(field: 'date' | 'name' | 'price' | 'profit'): void {
+    if (this.sortField() === field) {
+      this.sortDir.update(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortField.set(field);
+      this.sortDir.set(field === 'date' ? 'desc' : 'asc');
+    }
+  }
+
   totalRevenue = computed(() => this.data.sales().reduce((s, r) => s + r.sellPrice, 0));
   totalProfit = computed(() => this.data.sales().reduce((s, r) => s + (r.sellPrice - r.productCost), 0));
 
-  sortedSales = computed(() =>
-    [...this.data.sales()].sort((a, b) => b.date.localeCompare(a.date))
-  );
+  sortedSales = computed(() => {
+    const q = this.searchQuery().toLowerCase();
+    let result = q
+      ? this.data.sales().filter(r => r.productName.toLowerCase().includes(q))
+      : [...this.data.sales()];
+    const dir = this.sortDir() === 'asc' ? 1 : -1;
+    return result.sort((a, b) => {
+      switch (this.sortField()) {
+        case 'date':   return dir * a.date.localeCompare(b.date);
+        case 'name':   return dir * a.productName.localeCompare(b.productName);
+        case 'price':  return dir * (a.sellPrice - b.sellPrice);
+        case 'profit': return dir * ((a.sellPrice - a.productCost) - (b.sellPrice - b.productCost));
+      }
+    });
+  });
 
   monthStats = computed<MonthStat[]>(() => {
     const map = new Map<string, MonthStat>();
@@ -207,11 +258,6 @@ export class HistoryComponent {
 
   formatDate(dateStr: string): string {
     return new Date(dateStr + 'T12:00:00').toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: 'numeric' });
-  }
-
-  openSaleModal(): void {
-    if (this.data.products().length === 0) return;
-    this.dialog.open(SaleModalComponent, { width: '400px' });
   }
 
   onDelete(sale: SaleRecord): void {

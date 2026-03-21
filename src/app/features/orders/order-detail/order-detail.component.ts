@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { Router } from '@angular/router';
 import { Order, OrderRowCalc } from '../../../core/models/catalog.models';
 import { DataService } from '../../../core/services/data.service';
 
@@ -117,7 +118,7 @@ import { DataService } from '../../../core/services/data.service';
                 <input matInput type="number" [value]="r.item.sellPrice || ''"
                   placeholder="0.00"
                   (focus)="$any($event.target).select()"
-                  (change)="data.updateSellPrice(order().id, r.product.id, +$any($event.target).value)" />
+                  (change)="onSellPrice(r.product.id, +$any($event.target).value)" />
               </mat-form-field>
             </td>
           </ng-container>
@@ -213,6 +214,7 @@ import { DataService } from '../../../core/services/data.service';
 export class OrderDetailComponent {
   order = input.required<Order>();
   data = inject(DataService);
+  private router = inject(Router);
 
   searchQuery = signal('');
   sortField = signal<'name' | 'price' | 'cost' | 'profit'>('name');
@@ -263,6 +265,11 @@ export class OrderDetailComponent {
       }
     });
   });
+
+  onSellPrice(prodId: string, value: number): void {
+    this.data.updateSellPrice(this.order().id, prodId, value);
+    if (value > 0) this.router.navigate(['/history']);
+  }
 
   totalBuy = computed(() => this.rows().reduce((s, r) => s + (r.product.price ?? 0), 0));
   totalCost = computed(() => this.rows().reduce((s, r) => s + r.totalCost, 0));
