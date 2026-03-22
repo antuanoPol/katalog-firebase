@@ -75,12 +75,12 @@ import { Product } from '../../core/models/catalog.models';
         </div>
       } @else {
         <div class="select-toolbar">
-          <span class="select-badge">{{ selectedIds().size }} zaznaczone</span>
+          <span class="select-badge">{{ totalSelected() }} zaznaczone</span>
           <button class="tool-btn ghost cancel-btn" (click)="cancelSelect()">
             <mat-icon>close</mat-icon> Anuluj
           </button>
           <button class="tool-btn primary order-btn" (click)="openOrderModal()"
-            [disabled]="selectedIds().size === 0">
+            [disabled]="totalSelected() === 0">
             <mat-icon>local_shipping</mat-icon> Utwórz zamówienie
           </button>
         </div>
@@ -108,16 +108,15 @@ import { Product } from '../../core/models/catalog.models';
         [products]="productsForCat(cat.id)"
         [colorIndex]="i"
         [selectMode]="selectMode()"
-        [selectedIds]="selectedIds()"
         [forceExpand]="!!searchQuery()"
         (toggleCollapse)="data.toggleCategoryCollapse($event)"
         (addProduct)="openProductModal(null, $event)"
         (editProduct)="openProductModal($event, $event.catId)"
         (deleteProduct)="onDeleteProduct($event)"
-        (duplicateProduct)="data.duplicateProduct($event.id)"
         (viewProduct)="openProductDetail($event)"
         (deleteCategory)="data.deleteCategory($event)"
-        (toggleSelect)="toggleSelect($event)"
+        [selectedQty]="selectedQty()"
+        (setQty)="onSetQty($event.id, $event.qty)"
         (openLightbox)="lightboxSrc.set($event); showLightbox.set(true)"
       />
     }
@@ -132,12 +131,11 @@ import { Product } from '../../core/models/catalog.models';
       <app-product-item
         [product]="product"
         [selectMode]="selectMode()"
-        [selected]="selectedIds().has(product.id)"
+        [qty]="selectedQty().get(product.id) ?? 0"
         (view)="openProductDetail($event)"
         (edit)="openProductModal($event, $event.catId)"
         (delete)="onDeleteProduct($event)"
-        (duplicate)="data.duplicateProduct($event.id)"
-        (toggleSelect)="toggleSelect($event)"
+        (setQty)="onSetQty(product.id, $event)"
         (openLightbox)="lightboxSrc.set($event); showLightbox.set(true)"
       />
     }
@@ -298,9 +296,13 @@ export class CatalogComponent {
   observedCount = computed(() => Object.values(this.data.observedPrices()).filter(v => v.length > 0).length);
 
   selectMode = signal(false);
-  selectedIds = signal<Set<string>>(new Set());
+  selectedQty = signal<Map<string, number>>(new Map());
   lightboxSrc = signal('');
   showLightbox = signal(false);
+
+  totalSelected = computed(() =>
+    Array.from(this.selectedQty().values()).reduce((a, b) => a + b, 0)
+  );
 
   searchQuery = signal('');
   sortField = signal<'name' | 'price' | 'mass'>('name');
@@ -338,13 +340,13 @@ export class CatalogComponent {
     return this.sortedProds().filter(p => p.catId === catId);
   }
 
-  startSelect(): void { this.selectMode.set(true); this.selectedIds.set(new Set()); }
-  cancelSelect(): void { this.selectMode.set(false); this.selectedIds.set(new Set()); }
+  startSelect(): void { this.selectMode.set(true); this.selectedQty.set(new Map()); }
+  cancelSelect(): void { this.selectMode.set(false); this.selectedQty.set(new Map()); }
 
-  toggleSelect(id: string): void {
-    const set = new Set(this.selectedIds());
-    set.has(id) ? set.delete(id) : set.add(id);
-    this.selectedIds.set(set);
+  onSetQty(id: string, qty: number): void {
+    const map = new Map(this.selectedQty());
+    if (qty <= 0) map.delete(id); else map.set(id, qty);
+    this.selectedQty.set(map);
   }
 
   onDeleteProduct(id: string): void {
@@ -370,11 +372,13 @@ export class CatalogComponent {
   }
 
   openOrderModal(): void {
-    if (this.selectedIds().size === 0) {
+    if (this.totalSelected() === 0) {
       this.notify.notify('Zaznacz przynajmniej jeden produkt');
       return;
     }
-    const data: OrderModalData = { selectedIds: Array.from(this.selectedIds()) };
+    const ids: string[] = [];
+    this.selectedQty().forEach((qty, id) => { for (let i = 0; i < qty; i++) ids.push(id); });
+    const data: OrderModalData = { selectedIds: ids };
     const ref = this.dialog.open(OrderModalComponent, { width: '360px', data });
     ref.afterClosed().subscribe(created => {
       if (created) { this.cancelSelect(); this.router.navigate(['/orders']); }

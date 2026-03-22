@@ -54,12 +54,11 @@ const COLORS = [
           <app-product-item
             [product]="product"
             [selectMode]="selectMode()"
-            [selected]="selectedIds().has(product.id)"
+            [qty]="selectedQty().get(product.id) ?? 0"
             (view)="viewProduct.emit($event)"
             (edit)="editProduct.emit($event)"
             (delete)="deleteProduct.emit($event)"
-            (duplicate)="duplicateProduct.emit($event)"
-            (toggleSelect)="toggleSelect.emit($event)"
+            (setQty)="setQty.emit({id: product.id, qty: $event})"
             (openLightbox)="openLightbox.emit($event)"
           />
         }
@@ -101,17 +100,16 @@ export class CategoryGroupComponent {
   products = input.required<Product[]>();
   colorIndex = input<number>(0);
   selectMode = input<boolean>(false);
-  selectedIds = input<Set<string>>(new Set());
+  selectedQty = input<Map<string, number>>(new Map());
   forceExpand = input<boolean>(false);
 
   toggleCollapse = output<string>();
   addProduct = output<string>();
   editProduct = output<Product>();
   deleteProduct = output<string>();
-  duplicateProduct = output<Product>();
   viewProduct = output<Product>();
   deleteCategory = output<string>();
-  toggleSelect = output<string>();
+  setQty = output<{id: string, qty: number}>();
   openLightbox = output<string>();
 
   private dialog = inject(MatDialog);

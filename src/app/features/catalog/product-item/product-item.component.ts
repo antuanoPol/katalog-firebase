@@ -2,16 +2,15 @@ import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Product } from '../../../core/models/catalog.models';
 
 @Component({
   selector: 'app-product-item',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatCheckboxModule, MatTooltipModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule, MatTooltipModule],
   template: `
-    <div class="prod-item" [class.selected]="selected()">
+    <div class="prod-item" [class.selected]="qty() > 0">
 
       <!-- Thumbnail -->
       <div class="prod-thumb" (click)="thumbSrc() && openLightbox.emit(thumbSrc())">
@@ -41,12 +40,23 @@ import { Product } from '../../../core/models/catalog.models';
 
       <!-- Actions -->
       @if (selectMode()) {
-        <mat-checkbox [checked]="selected()" (change)="toggleSelect.emit(product().id)" color="primary" />
+        @if (qty() > 0) {
+          <div class="qty-stepper">
+            <button class="qty-btn" (click)="setQty.emit(qty() - 1)">
+              <mat-icon>{{ qty() === 1 ? 'close' : 'remove' }}</mat-icon>
+            </button>
+            <span class="qty-val">{{ qty() }}</span>
+            <button class="qty-btn add" (click)="setQty.emit(qty() + 1)">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+        } @else {
+          <button class="qty-add-btn" (click)="setQty.emit(1)" matTooltip="Dodaj do paczki">
+            <mat-icon>add_circle_outline</mat-icon>
+          </button>
+        }
       } @else {
         <div class="prod-actions">
-          <button mat-icon-button (click)="duplicate.emit(product())" matTooltip="Powiel">
-            <mat-icon>content_copy</mat-icon>
-          </button>
           <button mat-icon-button (click)="edit.emit(product())" matTooltip="Edytuj">
             <mat-icon>edit</mat-icon>
           </button>
@@ -91,18 +101,40 @@ import { Product } from '../../../core/models/catalog.models';
     .prod-actions { display: flex; opacity: 0; transition: opacity .2s; }
     .prod-item:hover .prod-actions { opacity: 1; }
     @media (hover: none) { .prod-actions { opacity: 1; } }
+    .qty-stepper {
+      display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+    }
+    .qty-btn {
+      width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border-amber);
+      background: rgba(255,193,7,.1); color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .15s; flex-shrink: 0;
+    }
+    .qty-btn mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    .qty-btn:hover { background: rgba(255,193,7,.22); }
+    .qty-btn.add { background: rgba(255,193,7,.18); }
+    .qty-val {
+      min-width: 26px; text-align: center;
+      font-size: 14px; font-weight: 700; color: var(--primary);
+    }
+    .qty-add-btn {
+      background: none; border: none; cursor: pointer; padding: 4px;
+      display: flex; align-items: center; color: var(--text-muted);
+      border-radius: 8px; transition: color .15s;
+    }
+    .qty-add-btn:hover { color: var(--primary); }
+    .qty-add-btn mat-icon { font-size: 24px; width: 24px; height: 24px; }
   `],
 })
 export class ProductItemComponent {
   product = input.required<Product>();
   selectMode = input<boolean>(false);
-  selected = input<boolean>(false);
+  qty = input<number>(0);
 
   view = output<Product>();
   edit = output<Product>();
   delete = output<string>();
-  duplicate = output<Product>();
-  toggleSelect = output<string>();
+  setQty = output<number>();
   openLightbox = output<string>();
 
   thumbSrc() {
