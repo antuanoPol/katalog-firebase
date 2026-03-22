@@ -89,7 +89,7 @@ import { DataService } from '../../core/services/data.service';
 
                     @if (getPrices(prod.id).length > 0) {
                       <div class="prices-list">
-                        @for (price of getPrices(prod.id); track $index; let i = $index) {
+                        @for (price of getPrices(prod.id); track i; let i = $index) {
                           <div class="price-item">
                             <span class="price-num">{{ i + 1 }}.</span>
                             <span class="price-val">{{ price | number:'1.2-2' }} zł</span>
