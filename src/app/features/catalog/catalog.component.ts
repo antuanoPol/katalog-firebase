@@ -140,7 +140,7 @@ import { Product } from '../../core/models/catalog.models';
   `,
   styles: [`
     .catalog-toolbar {
-      display: flex; gap: 8px; padding: 10px 12px; flex-wrap: wrap;
+      display: flex; align-items: center; gap: 8px; padding: 10px 12px; flex-wrap: wrap;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 9;

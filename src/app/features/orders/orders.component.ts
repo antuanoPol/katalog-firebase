@@ -94,8 +94,8 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/c
     }
     .order-count-chip {
       font-size: 11px; font-weight: 700;
-      color: #f59e0b;
-      background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.35);
+      color: #10b981;
+      background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.35);
       padding: 2px 9px; border-radius: 20px; letter-spacing: .04em;
     }
     .orders-controls {
