@@ -82,6 +82,9 @@ import { DataService } from '../../core/services/data.service';
                     <mat-icon class="chevron" [class.rotated]="expandedId() === prod.id">
                       expand_more
                     </mat-icon>
+                    <button class="unwatch-btn" (click)="$event.stopPropagation(); unwatch(prod.id)" title="Usuń z obserwowanych">
+                      <mat-icon>visibility_off</mat-icon>
+                    </button>
                   </div>
                 </div>
 
@@ -206,6 +209,15 @@ import { DataService } from '../../core/services/data.service';
     .no-price { font-size: 11px; color: var(--text-muted); }
     .chevron { color: var(--text-muted); transition: transform .2s; font-size: 20px; width: 20px; height: 20px; }
     .chevron.rotated { transform: rotate(180deg); }
+    .unwatch-btn {
+      background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px;
+      display: flex; align-items: center; color: var(--text-muted);
+      opacity: 0; transition: opacity .15s, color .15s;
+    }
+    .unwatch-btn mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    .unwatch-btn:hover { color: #f43f5e; }
+    .prod-row:hover .unwatch-btn { opacity: 1; }
+    @media (max-width: 767px) { .unwatch-btn { opacity: 1; } }
 
     /* Expanded price panel */
     .price-panel {
@@ -307,6 +319,11 @@ export class WatchedComponent {
       this.expandedId.set(productId);
       this.newPrice.set('');
     }
+  }
+
+  unwatch(productId: string): void {
+    this.data.updateProduct(productId, { watched: false });
+    if (this.expandedId() === productId) this.expandedId.set(null);
   }
 
   addPrice(productId: string): void {
