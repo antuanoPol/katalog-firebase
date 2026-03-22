@@ -22,53 +22,50 @@ interface MonthStat {
   template: `
     <div class="history-page">
 
-      <!-- Sticky toolbar only -->
+      <!-- Sticky: toolbar + stats -->
       <div class="h-sticky-top">
-      <!-- Toolbar -->
-
-      <div class="h-toolbar">
-        <span class="h-title">Historia sprzedaży</span>
-        <div class="search-box">
-          <mat-icon class="search-icon">search</mat-icon>
-          <input class="search-input" [value]="searchQuery()"
-            (input)="searchQuery.set($any($event.target).value)"
-            placeholder="Szukaj produktu..." />
-          @if (searchQuery()) {
-            <button class="search-clear" (click)="searchQuery.set('')">
-              <mat-icon>close</mat-icon>
+        <div class="h-toolbar">
+          <span class="h-title">Historia sprzedaży</span>
+          <div class="search-box">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input class="search-input" [value]="searchQuery()"
+              (input)="searchQuery.set($any($event.target).value)"
+              placeholder="Szukaj produktu..." />
+            @if (searchQuery()) {
+              <button class="search-clear" (click)="searchQuery.set('')">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </div>
+          <div class="sort-group">
+            <button class="sort-btn" [class.active]="sortField() === 'date'" (click)="setSort('date')">
+              Data {{ sortField() === 'date' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
             </button>
-          }
+            <button class="sort-btn" [class.active]="sortField() === 'name'" (click)="setSort('name')">
+              Nazwa {{ sortField() === 'name' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
+            </button>
+            <button class="sort-btn" [class.active]="sortField() === 'price'" (click)="setSort('price')">
+              Cena {{ sortField() === 'price' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
+            </button>
+            <button class="sort-btn" [class.active]="sortField() === 'profit'" (click)="setSort('profit')">
+              Zysk {{ sortField() === 'profit' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
+            </button>
+          </div>
         </div>
-        <div class="sort-group">
-          <button class="sort-btn" [class.active]="sortField() === 'date'" (click)="setSort('date')">
-            Data {{ sortField() === 'date' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
-          </button>
-          <button class="sort-btn" [class.active]="sortField() === 'name'" (click)="setSort('name')">
-            Nazwa {{ sortField() === 'name' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
-          </button>
-          <button class="sort-btn" [class.active]="sortField() === 'price'" (click)="setSort('price')">
-            Cena {{ sortField() === 'price' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
-          </button>
-          <button class="sort-btn" [class.active]="sortField() === 'profit'" (click)="setSort('profit')">
-            Zysk {{ sortField() === 'profit' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
-          </button>
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-val">{{ totalRevenue() | number:'1.0-0' }} zł</div>
+            <div class="stat-label">Przychód</div>
+          </div>
+          <div class="stat-card profit">
+            <div class="stat-val">{{ totalProfit() | number:'1.0-0' }} zł</div>
+            <div class="stat-label">Zysk</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">{{ data.sales().length }}</div>
+            <div class="stat-label">Transakcji</div>
+          </div>
         </div>
-
-      <!-- Stats cards -->
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-val">{{ totalRevenue() | number:'1.0-0' }} zł</div>
-          <div class="stat-label">Przychód</div>
-        </div>
-        <div class="stat-card profit">
-          <div class="stat-val">{{ totalProfit() | number:'1.0-0' }} zł</div>
-          <div class="stat-label">Zysk</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-val">{{ data.sales().length }}</div>
-          <div class="stat-label">Transakcji</div>
-        </div>
-      </div>
       </div><!-- /h-sticky-top -->
 
       <!-- Monthly chart -->
