@@ -64,7 +64,14 @@ export class DataService {
         data = snap.data() as AppState;
       } else {
         data = SAMPLE_DATA;
-        await setDoc(ref, SAMPLE_DATA);
+        await setDoc(ref, this.stripImages(SAMPLE_DATA));
+      }
+      // Merge images from localStorage (images are not stored in Firestore)
+      const cached = localStorage.getItem('katalog_cache');
+      if (cached) {
+        const local = JSON.parse(cached) as AppState;
+        const imgMap = new Map(local.products?.map(p => [p.id, { img: p.img, imgs: p.imgs }]) ?? []);
+        data.products = (data.products ?? []).map(p => ({ ...p, ...(imgMap.get(p.id) ?? {}) }));
       }
       this.applyState(data);
       this.syncState.set('online');
@@ -340,11 +347,22 @@ export class DataService {
     this.saveSubject.next();
   }
 
+  private stripImages(state: AppState): AppState {
+    return {
+      ...state,
+      products: (state.products ?? []).map(p => ({
+        ...p,
+        img: p.img?.startsWith('data:') ? '' : (p.img ?? ''),
+        imgs: (p.imgs ?? []).filter(url => !url.startsWith('data:')),
+      })),
+    };
+  }
+
   private async persistToFirestore(): Promise<void> {
     if (!this.uid) return;
     try {
       const ref = doc(this.firestore, `users/${this.uid}/katalog`, 'katalog');
-      await setDoc(ref, this.snapshot());
+      await setDoc(ref, this.stripImages(this.snapshot()));
       this.syncState.set('online');
     } catch (err) {
       console.error('[Firestore sync error]', err);

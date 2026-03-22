@@ -1,8 +1,18 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 
 @Injectable({ providedIn: 'root' })
 export class ImageService {
-  resizeAndEncode(file: File, maxPx = 800, quality = 0.8): Promise<string> {
+  private storage = inject(Storage);
+
+  async uploadImage(file: File, uid: string, maxPx = 800, quality = 0.8): Promise<string> {
+    const blob = await this.resizeToBlob(file, maxPx, quality);
+    const storageRef = ref(this.storage, `images/${uid}/${crypto.randomUUID()}.jpg`);
+    await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
+    return getDownloadURL(storageRef);
+  }
+
+  private resizeToBlob(file: File, maxPx: number, quality: number): Promise<Blob> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -22,7 +32,11 @@ export class ImageService {
           canvas.width = width;
           canvas.height = height;
           canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', quality));
+          canvas.toBlob(
+            (blob) => blob ? resolve(blob) : reject(new Error('toBlob failed')),
+            'image/jpeg',
+            quality,
+          );
         };
         img.onerror = reject;
         img.src = e.target!.result as string;

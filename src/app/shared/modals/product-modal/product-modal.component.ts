@@ -10,7 +10,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { DataService } from '../../../core/services/data.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ImageService } from '../../../core/services/image.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Product } from '../../../core/models/catalog.models';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 export interface ProductModalData {
   product: Product | null;
@@ -23,7 +25,7 @@ export interface ProductModalData {
   imports: [
     CommonModule, ReactiveFormsModule,
     MatDialogModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatButtonModule, MatIconModule,
+    MatSelectModule, MatButtonModule, MatIconModule, MatProgressBarModule,
   ],
   template: `
     <h2 mat-dialog-title>{{ dialogData.product ? 'Edytuj produkt' : 'Nowy produkt' }}</h2>
@@ -68,9 +70,12 @@ export interface ProductModalData {
               </div>
             }
           </div>
+          @if (uploading()) {
+            <mat-progress-bar mode="indeterminate" style="margin-bottom: 8px; border-radius: 4px;"></mat-progress-bar>
+          }
           <div class="imgs-add">
-            <button mat-stroked-button type="button" (click)="fileInput.click()">
-              <mat-icon>add_photo_alternate</mat-icon> Dodaj zdjęcie
+            <button mat-stroked-button type="button" (click)="fileInput.click()" [disabled]="uploading()">
+              <mat-icon>add_photo_alternate</mat-icon> {{ uploading() ? 'Przesyłam...' : 'Dodaj zdjęcie' }}
             </button>
             <div class="url-row">
               <input class="url-input" #urlInput placeholder="lub wklej URL i zatwierdź →"
@@ -122,7 +127,7 @@ export interface ProductModalData {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Anuluj</button>
-      <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid">Zapisz</button>
+      <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid || uploading()">Zapisz</button>
     </mat-dialog-actions>
   `,
   styles: [`
@@ -173,9 +178,11 @@ export class ProductModalComponent implements OnInit {
   dialogData: ProductModalData = inject(MAT_DIALOG_DATA);
   private notify = inject(NotificationService);
   private imgService = inject(ImageService);
+  private auth = inject(AuthService);
   private fb = inject(FormBuilder);
 
   images = signal<string[]>([]);
+  uploading = signal(false);
 
   form = this.fb.group({
     catId: [''],
@@ -200,26 +207,45 @@ export class ProductModalComponent implements OnInit {
 
   async onFilesChange(event: Event): Promise<void> {
     const files = Array.from((event.target as HTMLInputElement).files ?? []);
-    for (const file of files) {
-      const base64 = await this.imgService.resizeAndEncode(file);
-      this.images.update(imgs => [...imgs, base64]);
-    }
     (event.target as HTMLInputElement).value = '';
+    if (!files.length) return;
+    const uid = this.auth.user()?.uid;
+    if (!uid) return;
+    this.uploading.set(true);
+    try {
+      for (const file of files) {
+        const url = await this.imgService.uploadImage(file, uid);
+        this.images.update(imgs => [...imgs, url]);
+      }
+    } catch {
+      this.notify.notify('Błąd przesyłania zdjęcia');
+    } finally {
+      this.uploading.set(false);
+    }
   }
 
   @HostListener('paste', ['$event'])
   async onPaste(event: ClipboardEvent): Promise<void> {
     const items = event.clipboardData?.items;
     if (!items) return;
-    for (const item of Array.from(items)) {
-      if (item.type.startsWith('image/')) {
-        const blob = item.getAsFile();
-        if (blob) {
-          event.preventDefault();
-          const base64 = await this.imgService.resizeAndEncode(blob as File);
-          this.images.update(imgs => [...imgs, base64]);
-        }
+    const imageFiles = Array.from(items)
+      .filter(i => i.type.startsWith('image/'))
+      .map(i => i.getAsFile())
+      .filter((f): f is File => f !== null);
+    if (!imageFiles.length) return;
+    const uid = this.auth.user()?.uid;
+    if (!uid) return;
+    event.preventDefault();
+    this.uploading.set(true);
+    try {
+      for (const file of imageFiles) {
+        const url = await this.imgService.uploadImage(file, uid);
+        this.images.update(imgs => [...imgs, url]);
       }
+    } catch {
+      this.notify.notify('Błąd przesyłania zdjęcia');
+    } finally {
+      this.uploading.set(false);
     }
   }
 
