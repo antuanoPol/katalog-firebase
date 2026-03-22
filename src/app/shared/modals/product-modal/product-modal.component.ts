@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -205,6 +205,22 @@ export class ProductModalComponent implements OnInit {
       this.images.update(imgs => [...imgs, base64]);
     }
     (event.target as HTMLInputElement).value = '';
+  }
+
+  @HostListener('paste', ['$event'])
+  async onPaste(event: ClipboardEvent): Promise<void> {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        const blob = item.getAsFile();
+        if (blob) {
+          event.preventDefault();
+          const base64 = await this.imgService.resizeAndEncode(blob as File);
+          this.images.update(imgs => [...imgs, base64]);
+        }
+      }
+    }
   }
 
   addFromUrl(url: string): void {
