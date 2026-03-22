@@ -63,11 +63,11 @@ import { Product } from '../../core/models/catalog.models';
               <button class="sort-btn" [class.active]="sortField() === 'mass'" (click)="setSort('mass')">
                 Masa {{ sortField() === 'mass' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
               </button>
+              <!-- Mobile only: watched icon inside sort-group, no gap -->
+              <button class="sort-btn watched-sort-btn mobile-watched" (click)="router.navigate(['/watched'])">
+                <mat-icon>visibility</mat-icon>
+              </button>
             </div>
-            <!-- Mobile only: watched icon in sort row -->
-            <button class="tool-btn watched-btn mobile-watched" (click)="router.navigate(['/watched'])">
-              <mat-icon>visibility</mat-icon>
-            </button>
             @if (data.products().length > 0) {
               <span class="prod-count-chip">{{ data.products().length }} szt.</span>
             }
@@ -200,7 +200,7 @@ import { Product } from '../../core/models/catalog.models';
       .tool-btn { padding: 7px 12px; font-size: 12px; }
       .tool-btn.watched-btn { padding: 7px 9px; }
       .toolbar-right { flex-basis: 100%; flex-direction: column; align-items: stretch; gap: 6px; }
-      .search-box { max-width: 100%; min-width: 0; height: 42px; }
+      .search-box { width: 100%; max-width: 100%; min-width: 0; height: 42px; box-sizing: border-box; }
       .sort-row { justify-content: flex-start; }
     }
     .prod-count-chip {
@@ -260,6 +260,9 @@ import { Product } from '../../core/models/catalog.models';
     }
     .sort-btn.active { border-color: var(--border-amber); color: var(--primary); background: rgba(255,193,7,.08); }
     .sort-btn:hover { border-color: var(--border-amber); color: var(--primary); }
+    .watched-sort-btn { border-color: rgba(56,189,248,.3); color: #38bdf8; background: rgba(56,189,248,.08); display: flex; align-items: center; padding: 6px 8px; }
+    .watched-sort-btn mat-icon { font-size: 15px; width: 15px; height: 15px; }
+    .watched-sort-btn:hover { background: rgba(56,189,248,.16); }
     .empty-state {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; padding: 80px 24px; gap: 8px;
