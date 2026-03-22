@@ -200,7 +200,7 @@ import { Product } from '../../core/models/catalog.models';
       .tool-btn { padding: 7px 12px; font-size: 12px; }
       .tool-btn.watched-btn { padding: 7px 9px; }
       .toolbar-right { flex-basis: 100%; flex-direction: column; align-items: stretch; gap: 6px; }
-      .search-box { width: 100%; max-width: 100%; min-width: 0; height: 42px; box-sizing: border-box; }
+      .search-box { width: 100%; max-width: 100%; min-width: 0; height: 52px; box-sizing: border-box; }
       .sort-row { justify-content: flex-start; }
     }
     .prod-count-chip {
@@ -236,15 +236,16 @@ import { Product } from '../../core/models/catalog.models';
     .search-box {
       display: flex; align-items: center; gap: 6px;
       background: var(--surface-2); border: 1px solid var(--border);
-      border-radius: 10px; padding: 0 10px; height: 36px;
-      flex: 1; min-width: 160px; max-width: 280px;
+      border-radius: 10px; padding: 0 10px; height: 42px;
+      flex: 1; min-width: 160px;
       transition: border-color .2s;
+      margin: 8px 0;
     }
     .search-box:focus-within { border-color: var(--border-amber); }
     .search-icon { font-size: 16px; width: 16px; height: 16px; color: var(--text-muted); }
     .search-input {
       flex: 1; background: none; border: none; outline: none;
-      color: var(--text); font-size: 13px; font-family: inherit;
+      color: var(--text); font-size: 18px; font-family: inherit;
     }
     .search-clear {
       background: none; border: none; cursor: pointer; padding: 0;
