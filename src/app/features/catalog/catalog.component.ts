@@ -37,9 +37,6 @@ import { Product } from '../../core/models/catalog.models';
         }
         <button class="tool-btn watched-btn" (click)="router.navigate(['/watched'])">
           <mat-icon>visibility</mat-icon> Obserwowane
-          @if (observedCount() > 0) {
-            <span class="watched-chip">{{ observedCount() }}</span>
-          }
         </button>
         <!-- Search + Sort (right-aligned group) -->
         <div class="toolbar-right">

@@ -50,6 +50,9 @@ interface MonthStat {
             <button class="sort-btn" [class.active]="sortField() === 'profit'" (click)="setSort('profit')">
               Zysk {{ sortField() === 'profit' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
             </button>
+            <button class="sort-btn" [class.active]="sortField() === 'mass'" (click)="setSort('mass')">
+              Masa {{ sortField() === 'mass' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
+            </button>
           </div>
         </div>
         <div class="stats-row">
@@ -221,10 +224,10 @@ export class HistoryComponent {
   private dialog = inject(MatDialog);
 
   searchQuery = signal('');
-  sortField = signal<'date' | 'name' | 'price' | 'profit'>('date');
+  sortField = signal<'date' | 'name' | 'price' | 'profit' | 'mass'>('date');
   sortDir = signal<'asc' | 'desc'>('desc');
 
-  setSort(field: 'date' | 'name' | 'price' | 'profit'): void {
+  setSort(field: 'date' | 'name' | 'price' | 'profit' | 'mass'): void {
     if (this.sortField() === field) {
       this.sortDir.update(d => d === 'asc' ? 'desc' : 'asc');
     } else {
@@ -248,6 +251,10 @@ export class HistoryComponent {
         case 'name':   return dir * a.productName.localeCompare(b.productName);
         case 'price':  return dir * (a.sellPrice - b.sellPrice);
         case 'profit': return dir * ((a.sellPrice - a.productCost) - (b.sellPrice - b.productCost));
+        case 'mass': {
+          const getMass = (prodId: string) => this.data.products().find(p => p.id === prodId)?.mass ?? 0;
+          return dir * (getMass(a.productId) - getMass(b.productId));
+        }
       }
     });
   });
