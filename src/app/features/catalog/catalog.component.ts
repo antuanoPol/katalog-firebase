@@ -35,9 +35,6 @@ import { Product } from '../../core/models/catalog.models';
             <mat-icon>check_box</mat-icon> Do paczki
           </button>
         }
-        <button class="tool-btn watched-btn" (click)="router.navigate(['/watched'])">
-          <mat-icon>visibility</mat-icon><span class="watched-label"> Obserwowane</span>
-        </button>
         <!-- Search + Sort (right-aligned group) -->
         <div class="toolbar-right">
           <div class="search-box">
@@ -63,6 +60,9 @@ import { Product } from '../../core/models/catalog.models';
                 Masa {{ sortField() === 'mass' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
               </button>
             </div>
+            <button class="tool-btn watched-btn" (click)="router.navigate(['/watched'])">
+              <mat-icon>visibility</mat-icon><span class="watched-label"> Obserwowane</span>
+            </button>
             @if (data.products().length > 0) {
               <span class="prod-count-chip">{{ data.products().length }} szt.</span>
             }
@@ -191,7 +191,7 @@ import { Product } from '../../core/models/catalog.models';
       .tool-btn.watched-btn { padding: 7px 9px; }
       .toolbar-right { flex-basis: 100%; flex-direction: column; align-items: stretch; gap: 6px; }
       .search-box { max-width: 100%; min-width: 0; height: 42px; }
-      .sort-row { justify-content: space-between; }
+      .sort-row { justify-content: flex-start; }
     }
     .prod-count-chip {
       font-size: 11px; font-weight: 700;
