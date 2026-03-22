@@ -158,6 +158,17 @@ interface MonthStat {
     @media (max-width: 767px) {
       .search-box { flex-basis: 100%; max-width: 100%; min-width: 0; }
       .sort-group { width: 100%; }
+      .h-toolbar { padding: 6px 12px; }
+      .stats-row { padding: 4px 12px 6px; gap: 6px; }
+      .stat-card { padding: 5px 6px; }
+      .stat-val { font-size: clamp(11px, 3.5vw, 17px); }
+      .stat-label { font-size: 10px; margin-top: 2px; }
+      .chart-section { margin: 0 12px 10px; padding: 10px 12px; }
+      .chart-title { margin-bottom: 6px; }
+      .chart-bars { height: 100px; }
+      .bar-wrap { height: 70px; }
+      .bar-label { font-size: 8px; }
+      .bar-val { font-size: 9px; }
     }
     .sort-btn { padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .2s; }
     .sort-btn.active { border-color: var(--border-amber); color: var(--primary); background: rgba(255,193,7,.08); }

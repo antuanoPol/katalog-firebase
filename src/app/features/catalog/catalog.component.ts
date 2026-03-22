@@ -35,6 +35,12 @@ import { Product } from '../../core/models/catalog.models';
             <mat-icon>check_box</mat-icon> Do paczki
           </button>
         }
+        <button class="tool-btn watched-btn" (click)="router.navigate(['/watched'])">
+          <mat-icon>visibility</mat-icon> Obserwowane
+          @if (observedCount() > 0) {
+            <span class="watched-chip">{{ observedCount() }}</span>
+          }
+        </button>
         <!-- Search + Sort (right-aligned group) -->
         <div class="toolbar-right">
           <div class="search-box">
@@ -170,6 +176,15 @@ import { Product } from '../../core/models/catalog.models';
       border: 1px solid var(--border-amber);
     }
     .tool-btn.amber:hover { background: rgba(255,193,7,.18); }
+    .tool-btn.watched-btn {
+      background: rgba(56,189,248,.08); color: #38bdf8;
+      border: 1px solid rgba(56,189,248,.3);
+    }
+    .tool-btn.watched-btn:hover { background: rgba(56,189,248,.16); }
+    .watched-chip {
+      font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px;
+      background: rgba(56,189,248,.2); color: #38bdf8; margin-left: 2px;
+    }
     .toolbar-right {
       display: flex; align-items: center; gap: 6px; flex: 1;
       justify-content: flex-end; flex-wrap: wrap;
@@ -268,7 +283,9 @@ export class CatalogComponent {
   data = inject(DataService);
   private dialog = inject(MatDialog);
   private notify = inject(NotificationService);
-  private router = inject(Router);
+  router = inject(Router);
+
+  observedCount = computed(() => Object.values(this.data.observedPrices()).filter(v => v > 0).length);
 
   selectMode = signal(false);
   selectedIds = signal<Set<string>>(new Set());

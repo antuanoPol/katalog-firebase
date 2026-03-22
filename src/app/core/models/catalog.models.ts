@@ -46,28 +46,12 @@ export interface SaleRecord {
   orderId?: string; // set when created automatically from an order
 }
 
-export interface WatchedItem {
-  id: string;
-  name: string;
-  link?: string;
-  listedPrice: number;  // cena wywoławcza ogłoszenia
-  soldPrice?: number;   // cena za którą się sprzedało (wpisywana gdy sprzedane)
-  status: 'watching' | 'sold' | 'unsold';
-  category?: string;
-  size?: string;
-  brand?: string;
-  platform?: string;
-  addedDate: string;
-  soldDate?: string;
-  notes?: string;
-}
-
 export interface AppState {
   categories: Category[];
   products: Product[];
   orders: Order[];
   sales?: SaleRecord[];
-  watched?: WatchedItem[];
+  observedPrices?: Record<string, number>;
 }
 
 export interface OrderRowCalc {

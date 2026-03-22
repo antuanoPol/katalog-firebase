@@ -2,7 +2,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { Firestore, doc, getDoc, setDoc } from '@angular/fire/firestore';
 import { Subject } from 'rxjs';
 import { debounceTime, switchMap } from 'rxjs/operators';
-import { Category, Product, Order, AppState, OrderColor, SaleRecord, WatchedItem } from '../models/catalog.models';
+import { Category, Product, Order, AppState, OrderColor, SaleRecord } from '../models/catalog.models';
 import { NotificationService } from './notification.service';
 
 const COLORS: OrderColor[] = [
@@ -37,7 +37,7 @@ export class DataService {
   readonly products = signal<Product[]>([]);
   readonly orders = signal<Order[]>([]);
   readonly sales = signal<SaleRecord[]>([]);
-  readonly watched = signal<WatchedItem[]>([]);
+  readonly observedPrices = signal<Record<string, number>>({});
   readonly syncState = signal<'online' | 'syncing' | 'offline'>('online');
 
   readonly productCount = computed(() => this.products().length);
@@ -85,7 +85,7 @@ export class DataService {
     this.products.set([]);
     this.orders.set([]);
     this.sales.set([]);
-    this.watched.set([]);
+    this.observedPrices.set({});
     this.syncState.set('online');
   }
 
@@ -226,27 +226,9 @@ export class DataService {
     this.mutate(() => this.sales.update(s => s.filter(r => r.id !== id)));
   }
 
-  // ── Watched ──────────────────────────────────────────────────────
-  addWatched(item: Omit<WatchedItem, 'id' | 'addedDate'>): void {
-    this.mutate(() => this.watched.update(w => [
-      { ...item, id: crypto.randomUUID(), addedDate: new Date().toISOString().slice(0, 10) }, ...w
-    ]));
-  }
-
-  updateWatched(id: string, changes: Partial<WatchedItem>): void {
-    this.mutate(() => this.watched.update(w =>
-      w.map(x => x.id === id ? { ...x, ...changes } : x)
-    ));
-  }
-
-  deleteWatched(id: string): void {
-    this.mutate(() => this.watched.update(w => w.filter(x => x.id !== id)));
-  }
-
-  setWatchedStatus(id: string, status: WatchedItem['status']): void {
-    const changes: Partial<WatchedItem> = { status };
-    if (status === 'sold') changes.soldDate = new Date().toISOString().slice(0, 10);
-    this.updateWatched(id, changes);
+  // ── Observed prices ──────────────────────────────────────────────
+  setObservedPrice(productId: string, price: number): void {
+    this.mutate(() => this.observedPrices.update(p => ({ ...p, [productId]: price })));
   }
 
   // ── Import / Export ─────────────────────────────────────────────
@@ -301,7 +283,7 @@ export class DataService {
     this.products.set(data.products ?? []);
     this.orders.set(data.orders ?? []);
     this.sales.set(data.sales ?? []);
-    this.watched.set(data.watched ?? []);
+    this.observedPrices.set(data.observedPrices ?? {});
   }
 
   private snapshot(): AppState {
@@ -310,7 +292,7 @@ export class DataService {
       products: this.products(),
       orders: this.orders(),
       sales: this.sales(),
-      watched: this.watched(),
+      observedPrices: this.observedPrices(),
     };
   }
 
