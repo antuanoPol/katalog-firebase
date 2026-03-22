@@ -10,7 +10,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { DataService } from '../../../core/services/data.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ImageService } from '../../../core/services/image.service';
-import { AuthService } from '../../../core/services/auth.service';
 import { Product } from '../../../core/models/catalog.models';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
@@ -178,7 +177,6 @@ export class ProductModalComponent implements OnInit {
   dialogData: ProductModalData = inject(MAT_DIALOG_DATA);
   private notify = inject(NotificationService);
   private imgService = inject(ImageService);
-  private auth = inject(AuthService);
   private fb = inject(FormBuilder);
 
   images = signal<string[]>([]);
@@ -209,12 +207,10 @@ export class ProductModalComponent implements OnInit {
     const files = Array.from((event.target as HTMLInputElement).files ?? []);
     (event.target as HTMLInputElement).value = '';
     if (!files.length) return;
-    const uid = this.auth.user()?.uid;
-    if (!uid) return;
     this.uploading.set(true);
     try {
       for (const file of files) {
-        const url = await this.imgService.uploadImage(file, uid);
+        const url = await this.imgService.uploadImage(file);
         this.images.update(imgs => [...imgs, url]);
       }
     } catch {
@@ -233,13 +229,11 @@ export class ProductModalComponent implements OnInit {
       .map(i => i.getAsFile())
       .filter((f): f is File => f !== null);
     if (!imageFiles.length) return;
-    const uid = this.auth.user()?.uid;
-    if (!uid) return;
     event.preventDefault();
     this.uploading.set(true);
     try {
       for (const file of imageFiles) {
-        const url = await this.imgService.uploadImage(file, uid);
+        const url = await this.imgService.uploadImage(file);
         this.images.update(imgs => [...imgs, url]);
       }
     } catch {

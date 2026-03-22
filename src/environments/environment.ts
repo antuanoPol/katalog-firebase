@@ -7,5 +7,9 @@ export const environment = {
     storageBucket: 'vinted-kosztorys.firebasestorage.app',
     messagingSenderId: '546380259085',
     appId: '1:546380259085:web:f743cace53f18d02b31a44'
+  },
+  cloudinary: {
+    cloudName: 'de7qvlhfs',
+    uploadPreset: 'Vinted_kosztorys',
   }
 };

@@ -1,15 +1,20 @@
-import { Injectable, inject } from '@angular/core';
-import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
+import { Injectable } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ImageService {
-  private storage = inject(Storage);
-
-  async uploadImage(file: File, uid: string, maxPx = 800, quality = 0.8): Promise<string> {
+  async uploadImage(file: File, maxPx = 800, quality = 0.8): Promise<string> {
     const blob = await this.resizeToBlob(file, maxPx, quality);
-    const storageRef = ref(this.storage, `images/${uid}/${crypto.randomUUID()}.jpg`);
-    await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
-    return getDownloadURL(storageRef);
+    const formData = new FormData();
+    formData.append('file', blob, 'image.jpg');
+    formData.append('upload_preset', environment.cloudinary.uploadPreset);
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${environment.cloudinary.cloudName}/image/upload`,
+      { method: 'POST', body: formData },
+    );
+    if (!res.ok) throw new Error('Upload failed');
+    const json = await res.json();
+    return json.secure_url as string;
   }
 
   private resizeToBlob(file: File, maxPx: number, quality: number): Promise<Blob> {
