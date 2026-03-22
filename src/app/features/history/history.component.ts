@@ -22,9 +22,10 @@ interface MonthStat {
   template: `
     <div class="history-page">
 
-      <!-- Sticky header: toolbar + stats -->
+      <!-- Sticky toolbar only -->
       <div class="h-sticky-top">
       <!-- Toolbar -->
+
       <div class="h-toolbar">
         <span class="h-title">Historia sprzedaży</span>
         <div class="search-box">
@@ -53,6 +54,7 @@ interface MonthStat {
           </button>
         </div>
       </div>
+      </div><!-- /h-sticky-top -->
 
       <!-- Stats cards -->
       <div class="stats-row">
@@ -69,7 +71,6 @@ interface MonthStat {
           <div class="stat-label">Transakcji</div>
         </div>
       </div>
-      </div><!-- /h-sticky-top -->
 
       <!-- Monthly chart -->
       @if (monthStats().length > 0) {
@@ -160,7 +161,7 @@ interface MonthStat {
       padding: 12px 10px; text-align: center;
     }
     .stat-card.profit { border-color: rgba(74,222,128,.3); }
-    .stat-val { font-size: 22px; font-weight: 800; color: var(--primary); }
+    .stat-val { font-size: clamp(13px, 4vw, 22px); font-weight: 800; color: var(--primary); word-break: break-word; }
     .stat-card.profit .stat-val { color: #4ade80; }
     .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin-top: 4px; }
     .chart-section { margin: 0 16px 16px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
