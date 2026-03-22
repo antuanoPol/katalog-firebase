@@ -149,7 +149,7 @@ export interface ProductModalData {
     .img-act-btn mat-icon { font-size: 14px; width: 14px; height: 14px; color: white; }
     .img-act-btn.danger mat-icon { color: #f87171; }
     .img-main-badge {
-      position: absolute; bottom: 3px; left: 3px;
+      position: absolute; top: 3px; left: 3px;
       background: rgba(255,193,7,.9); color: #12121f;
       font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px;
     }
