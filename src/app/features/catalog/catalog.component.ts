@@ -45,24 +45,25 @@ import { Product } from '../../core/models/catalog.models';
         <div class="toolbar-right">
           <div class="search-box">
             <mat-icon class="search-icon">search</mat-icon>
-            <input class="search-input" [(ngModel)]="searchQuery"
+            <input class="search-input" [value]="searchQuery()"
+              (input)="searchQuery.set($any($event.target).value)"
               placeholder="Szukaj produktu..." />
-            @if (searchQuery) {
-              <button class="search-clear" (click)="searchQuery = ''">
+            @if (searchQuery()) {
+              <button class="search-clear" (click)="searchQuery.set('')">
                 <mat-icon>close</mat-icon>
               </button>
             }
           </div>
           <div class="sort-row">
             <div class="sort-group">
-              <button class="sort-btn" [class.active]="sortField === 'name'" (click)="setSort('name')">
-                Nazwa {{ sortField === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+              <button class="sort-btn" [class.active]="sortField() === 'name'" (click)="setSort('name')">
+                Nazwa {{ sortField() === 'name' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
               </button>
-              <button class="sort-btn" [class.active]="sortField === 'price'" (click)="setSort('price')">
-                Cena {{ sortField === 'price' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+              <button class="sort-btn" [class.active]="sortField() === 'price'" (click)="setSort('price')">
+                Cena {{ sortField() === 'price' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
               </button>
-              <button class="sort-btn" [class.active]="sortField === 'mass'" (click)="setSort('mass')">
-                Masa {{ sortField === 'mass' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+              <button class="sort-btn" [class.active]="sortField() === 'mass'" (click)="setSort('mass')">
+                Masa {{ sortField() === 'mass' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
               </button>
             </div>
             @if (data.products().length > 0) {
@@ -106,7 +107,7 @@ import { Product } from '../../core/models/catalog.models';
         [colorIndex]="i"
         [selectMode]="selectMode()"
         [selectedIds]="selectedIds()"
-        [forceExpand]="!!searchQuery"
+        [forceExpand]="!!searchQuery()"
         (toggleCollapse)="data.toggleCategoryCollapse($event)"
         (addProduct)="openProductModal(null, $event)"
         (editProduct)="openProductModal($event, $event.catId)"
@@ -292,51 +293,40 @@ export class CatalogComponent {
   lightboxSrc = signal('');
   showLightbox = signal(false);
 
-  searchQuery = '';
-  sortField: 'name' | 'price' | 'mass' = 'name';
-  sortDir: 'asc' | 'desc' = 'asc';
+  searchQuery = signal('');
+  sortField = signal<'name' | 'price' | 'mass'>('name');
+  sortDir = signal<'asc' | 'desc'>('asc');
 
   setSort(field: 'name' | 'price' | 'mass'): void {
-    if (this.sortField === field) {
-      this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+    if (this.sortField() === field) {
+      this.sortDir.update(d => d === 'asc' ? 'desc' : 'asc');
     } else {
-      this.sortField = field;
-      this.sortDir = 'asc';
+      this.sortField.set(field);
+      this.sortDir.set('asc');
     }
   }
 
-  uncategorizedProducts = computed(() => {
-    const catIds = new Set(this.data.categories().map(c => c.id));
-    let prods = this.data.products().filter(p => !p.catId || !catIds.has(p.catId));
-    if (this.searchQuery) {
-      const q = this.searchQuery.toLowerCase();
-      prods = prods.filter(p => p.name.toLowerCase().includes(q) || p.desc?.toLowerCase().includes(q));
-    }
-    const dir = this.sortDir === 'asc' ? 1 : -1;
+  private sortedProds = computed(() => {
+    const q = this.searchQuery().toLowerCase();
+    const field = this.sortField();
+    const dir = this.sortDir() === 'asc' ? 1 : -1;
+    let prods = this.data.products();
+    if (q) prods = prods.filter(p => p.name.toLowerCase().includes(q) || p.desc?.toLowerCase().includes(q));
     return [...prods].sort((a, b) => {
-      if (this.sortField === 'name') return dir * a.name.localeCompare(b.name);
-      if (this.sortField === 'price') return dir * (a.price - b.price);
-      if (this.sortField === 'mass') return dir * (a.mass - b.mass);
+      if (field === 'name') return dir * a.name.localeCompare(b.name);
+      if (field === 'price') return dir * ((a.price ?? 0) - (b.price ?? 0));
+      if (field === 'mass') return dir * ((a.mass ?? 0) - (b.mass ?? 0));
       return 0;
     });
   });
 
+  uncategorizedProducts = computed(() => {
+    const catIds = new Set(this.data.categories().map(c => c.id));
+    return this.sortedProds().filter(p => !p.catId || !catIds.has(p.catId));
+  });
+
   productsForCat(catId: string) {
-    let prods = this.data.products().filter(p => p.catId === catId);
-    if (this.searchQuery) {
-      const q = this.searchQuery.toLowerCase();
-      prods = prods.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        p.desc?.toLowerCase().includes(q)
-      );
-    }
-    const dir = this.sortDir === 'asc' ? 1 : -1;
-    return [...prods].sort((a, b) => {
-      if (this.sortField === 'name') return dir * a.name.localeCompare(b.name);
-      if (this.sortField === 'price') return dir * (a.price - b.price);
-      if (this.sortField === 'mass') return dir * (a.mass - b.mass);
-      return 0;
-    });
+    return this.sortedProds().filter(p => p.catId === catId);
   }
 
   startSelect(): void { this.selectMode.set(true); this.selectedIds.set(new Set()); }
