@@ -135,9 +135,9 @@ interface MonthStat {
     }
     .h-toolbar {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      padding: 12px 16px;
+      padding: 10px 16px;
     }
-    .h-title { font-size: 16px; font-weight: 700; color: var(--text); margin-right: 4px; }
+    .h-title { font-size: 16px; font-weight: 700; color: var(--text); flex-shrink: 0; }
     .search-box {
       display: flex; align-items: center; gap: 6px;
       background: var(--surface-2); border: 1px solid var(--border);
@@ -149,7 +149,11 @@ interface MonthStat {
     .search-input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: 13px; font-family: inherit; }
     .search-clear { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; color: var(--text-muted); }
     .search-clear mat-icon { font-size: 14px; width: 14px; height: 14px; }
-    .sort-group { display: flex; gap: 4px; }
+    .sort-group { display: flex; gap: 4px; flex-wrap: wrap; }
+    @media (max-width: 767px) {
+      .search-box { flex-basis: 100%; max-width: 100%; min-width: 0; }
+      .sort-group { width: 100%; }
+    }
     .sort-btn { padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .2s; }
     .sort-btn.active { border-color: var(--border-amber); color: var(--primary); background: rgba(255,193,7,.08); }
     .sort-btn:hover { border-color: var(--border-amber); color: var(--primary); }
@@ -161,7 +165,7 @@ interface MonthStat {
       padding: 12px 10px; text-align: center;
     }
     .stat-card.profit { border-color: rgba(74,222,128,.3); }
-    .stat-val { font-size: clamp(13px, 4vw, 22px); font-weight: 800; color: var(--primary); word-break: break-word; }
+    .stat-val { font-size: clamp(11px, 3.5vw, 22px); font-weight: 800; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .stat-card.profit .stat-val { color: #4ade80; }
     .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin-top: 4px; }
     .chart-section { margin: 0 16px 16px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }

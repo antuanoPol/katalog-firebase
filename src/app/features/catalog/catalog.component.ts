@@ -35,9 +35,6 @@ import { Product } from '../../core/models/catalog.models';
             <mat-icon>check_box</mat-icon> Do paczki
           </button>
         }
-        @if (data.products().length > 0) {
-          <span class="prod-count-chip">{{ data.products().length }} szt.</span>
-        }
         <!-- Search + Sort (right-aligned group) -->
         <div class="toolbar-right">
           <div class="search-box">
@@ -50,16 +47,21 @@ import { Product } from '../../core/models/catalog.models';
               </button>
             }
           </div>
-          <div class="sort-group">
-            <button class="sort-btn" [class.active]="sortField === 'name'" (click)="setSort('name')">
-              Nazwa {{ sortField === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
-            </button>
-            <button class="sort-btn" [class.active]="sortField === 'price'" (click)="setSort('price')">
-              Cena {{ sortField === 'price' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
-            </button>
-            <button class="sort-btn" [class.active]="sortField === 'mass'" (click)="setSort('mass')">
-              Masa {{ sortField === 'mass' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
-            </button>
+          <div class="sort-row">
+            <div class="sort-group">
+              <button class="sort-btn" [class.active]="sortField === 'name'" (click)="setSort('name')">
+                Nazwa {{ sortField === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+              </button>
+              <button class="sort-btn" [class.active]="sortField === 'price'" (click)="setSort('price')">
+                Cena {{ sortField === 'price' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+              </button>
+              <button class="sort-btn" [class.active]="sortField === 'mass'" (click)="setSort('mass')">
+                Masa {{ sortField === 'mass' ? (sortDir === 'asc' ? '↑' : '↓') : '' }}
+              </button>
+            </div>
+            @if (data.products().length > 0) {
+              <span class="prod-count-chip">{{ data.products().length }} szt.</span>
+            }
           </div>
         </div>
       } @else {
@@ -173,11 +175,13 @@ import { Product } from '../../core/models/catalog.models';
       display: flex; align-items: center; gap: 6px; flex: 1;
       justify-content: flex-end; flex-wrap: wrap;
     }
+    .sort-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     @media (max-width: 767px) {
       .catalog-toolbar { padding: 8px 10px; gap: 6px; }
       .tool-btn { padding: 7px 12px; font-size: 12px; }
-      .toolbar-right { flex-basis: 100%; justify-content: flex-start; }
-      .search-box { flex: 1; max-width: 100%; min-width: 0; }
+      .toolbar-right { flex-basis: 100%; flex-direction: column; align-items: stretch; gap: 6px; }
+      .search-box { max-width: 100%; min-width: 0; }
+      .sort-row { justify-content: space-between; }
     }
     .prod-count-chip {
       font-size: 11px; font-weight: 700;
@@ -185,9 +189,6 @@ import { Product } from '../../core/models/catalog.models';
       background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.35);
       padding: 4px 10px; border-radius: 20px; letter-spacing: .04em;
       white-space: nowrap; margin-left: auto;
-    }
-    @media (max-width: 767px) {
-      .prod-count-chip { margin-left: 0; }
     }
     .uncat-divider {
       display: flex; align-items: center; gap: 10px;
