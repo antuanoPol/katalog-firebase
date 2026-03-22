@@ -112,6 +112,12 @@ export interface ProductModalData {
             placeholder="stan, rozmiar, uwagi..."></textarea>
         </mat-form-field>
 
+        <button type="button" class="watch-toggle" [class.active]="form.value.watched"
+          (click)="form.patchValue({ watched: !form.value.watched })">
+          <mat-icon>{{ form.value.watched ? 'visibility' : 'visibility_off' }}</mat-icon>
+          {{ form.value.watched ? 'Obserwowane ceny — włączone' : 'Obserwowane ceny — wyłączone' }}
+        </button>
+
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -143,6 +149,15 @@ export interface ProductModalData {
       background: rgba(255,193,7,.9); color: #12121f;
       font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px;
     }
+    .watch-toggle {
+      display: flex; align-items: center; gap: 8px; width: 100%;
+      padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border, #333);
+      background: var(--surface-2, #1e1e2e); color: var(--text-muted, #888);
+      font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: all .2s; text-align: left;
+    }
+    .watch-toggle mat-icon { font-size: 18px; width: 18px; height: 18px; }
+    .watch-toggle.active { border-color: #38bdf8; color: #38bdf8; background: rgba(56,189,248,.08); }
     .imgs-add { display: flex; flex-direction: column; gap: 6px; }
     .url-row { display: flex; align-items: center; gap: 4px; }
     .url-input {
@@ -169,12 +184,13 @@ export class ProductModalComponent implements OnInit {
     mass: [0],
     link: [''],
     desc: [''],
+    watched: [false],
   });
 
   ngOnInit(): void {
     const p = this.dialogData.product;
     if (p) {
-      this.form.patchValue({ catId: p.catId, name: p.name, price: p.price, mass: p.mass, link: p.link, desc: p.desc });
+      this.form.patchValue({ catId: p.catId, name: p.name, price: p.price, mass: p.mass, link: p.link, desc: p.desc, watched: p.watched ?? false });
       const existing = p.imgs?.length ? p.imgs : (p.img ? [p.img] : []);
       this.images.set(existing);
     } else if (this.dialogData.defaultCatId) {
@@ -222,6 +238,7 @@ export class ProductModalComponent implements OnInit {
       imgs,
       link: v.link?.trim() ?? '',
       desc: v.desc?.trim() ?? '',
+      watched: v.watched ?? false,
     };
     const p = this.dialogData.product;
     if (p) {

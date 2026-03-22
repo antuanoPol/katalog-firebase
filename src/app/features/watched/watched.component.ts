@@ -34,13 +34,15 @@ import { DataService } from '../../core/services/data.service';
         <div class="filter-tabs">
           <button class="ftab" [class.active]="activeCategory() === 'all'"
             (click)="activeCategory.set('all')">
-            Wszystkie <span class="ftab-count">{{ data.products().length }}</span>
+            Wszystkie <span class="ftab-count">{{ watchedCount() }}</span>
           </button>
           @for (cat of data.categories(); track cat.id) {
-            <button class="ftab" [class.active]="activeCategory() === cat.id"
-              (click)="activeCategory.set(cat.id)">
-              {{ cat.name }} <span class="ftab-count">{{ catCount(cat.id) }}</span>
-            </button>
+            @if (catWatchedCount(cat.id) > 0) {
+              <button class="ftab" [class.active]="activeCategory() === cat.id"
+                (click)="activeCategory.set(cat.id)">
+                {{ cat.name }} <span class="ftab-count">{{ catWatchedCount(cat.id) }}</span>
+              </button>
+            }
           }
         </div>
       </div>
@@ -276,14 +278,16 @@ export class WatchedComponent {
       .map(cat => ({
         cat,
         prods: this.data.products()
-          .filter(p => p.catId === cat.id)
+          .filter(p => p.catId === cat.id && p.watched)
           .filter(p => !q || p.name.toLowerCase().includes(q)),
       }))
       .filter(g => g.prods.length > 0);
   });
 
-  catCount(catId: string): number {
-    return this.data.products().filter(p => p.catId === catId).length;
+  watchedCount = computed(() => this.data.products().filter(p => p.watched).length);
+
+  catWatchedCount(catId: string): number {
+    return this.data.products().filter(p => p.catId === catId && p.watched).length;
   }
 
   getPrices(productId: string): number[] {

@@ -36,7 +36,7 @@ import { Product } from '../../core/models/catalog.models';
           </button>
         }
         <button class="tool-btn watched-btn" (click)="router.navigate(['/watched'])">
-          <mat-icon>visibility</mat-icon> Obserwowane
+          <mat-icon>visibility</mat-icon><span class="watched-label"> Obserwowane</span>
         </button>
         <!-- Search + Sort (right-aligned group) -->
         <div class="toolbar-right">
@@ -179,10 +179,6 @@ import { Product } from '../../core/models/catalog.models';
       border: 1px solid rgba(56,189,248,.3);
     }
     .tool-btn.watched-btn:hover { background: rgba(56,189,248,.16); }
-    .watched-chip {
-      font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px;
-      background: rgba(56,189,248,.2); color: #38bdf8; margin-left: 2px;
-    }
     .toolbar-right {
       display: flex; align-items: center; gap: 6px; flex: 1;
       justify-content: flex-end; flex-wrap: wrap;
@@ -191,6 +187,8 @@ import { Product } from '../../core/models/catalog.models';
     @media (max-width: 767px) {
       .catalog-toolbar { padding: 8px 10px; gap: 6px; }
       .tool-btn { padding: 7px 12px; font-size: 12px; }
+      .tool-btn.watched-btn { padding: 7px 10px; }
+      .watched-label { display: none; }
       .toolbar-right { flex-basis: 100%; flex-direction: column; align-items: stretch; gap: 6px; }
       .search-box { max-width: 100%; min-width: 0; height: 42px; }
       .sort-row { justify-content: space-between; }

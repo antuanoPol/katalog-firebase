@@ -14,6 +14,7 @@ export interface Product {
   imgs?: string[];
   link: string;
   desc: string;
+  watched?: boolean;
 }
 
 export interface OrderItem {
