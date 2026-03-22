@@ -243,12 +243,9 @@ export class DataService {
     this.mutate(() => this.watched.update(w => w.filter(x => x.id !== id)));
   }
 
-  setWatchedStatus(id: string, status: WatchedItem['status'], sellPrice?: number): void {
+  setWatchedStatus(id: string, status: WatchedItem['status']): void {
     const changes: Partial<WatchedItem> = { status };
-    if (status === 'sold') {
-      changes.soldDate = new Date().toISOString().slice(0, 10);
-      if (sellPrice !== undefined) changes.sellPrice = sellPrice;
-    }
+    if (status === 'sold') changes.soldDate = new Date().toISOString().slice(0, 10);
     this.updateWatched(id, changes);
   }
 

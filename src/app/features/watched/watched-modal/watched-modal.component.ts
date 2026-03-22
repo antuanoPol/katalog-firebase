@@ -15,7 +15,7 @@ export interface WatchedModalData { item?: WatchedItem; }
   template: `
     <div class="modal">
       <div class="modal-header">
-        <span class="modal-title">{{ data.item ? 'Edytuj' : 'Dodaj obserwowane' }}</span>
+        <span class="modal-title">{{ data.item ? 'Edytuj obserwowane' : 'Dodaj obserwowane' }}</span>
         <button class="close-btn" (click)="dialogRef.close()"><mat-icon>close</mat-icon></button>
       </div>
       <div class="modal-body">
@@ -24,57 +24,57 @@ export interface WatchedModalData { item?: WatchedItem; }
           <input [(ngModel)]="name" placeholder="np. Nike Air Max 42" />
         </div>
         <div class="field">
-          <label>Link</label>
+          <label>Link do ogłoszenia</label>
           <input [(ngModel)]="link" placeholder="https://vinted.pl/..." />
         </div>
         <div class="row2">
           <div class="field">
-            <label>Cena kupna (zł) *</label>
-            <input type="number" [(ngModel)]="buyPrice" placeholder="0.00" />
+            <label>Cena wywoławcza (zł) *</label>
+            <input type="number" [(ngModel)]="listedPrice" placeholder="0.00" />
           </div>
+          <div class="field">
+            <label>Platforma</label>
+            <input [(ngModel)]="platform" placeholder="Vinted, OLX..." />
+          </div>
+        </div>
+        <div class="row2">
           <div class="field">
             <label>Kategoria</label>
             <input [(ngModel)]="category" placeholder="Buty, Ciuchy..." />
           </div>
-        </div>
-        <div class="row2">
           <div class="field">
             <label>Rozmiar</label>
             <input [(ngModel)]="size" placeholder="M, L, 42..." />
           </div>
-          <div class="field">
-            <label>Marka</label>
-            <input [(ngModel)]="brand" placeholder="Nike, Adidas..." />
-          </div>
         </div>
         <div class="row2">
           <div class="field">
-            <label>Platforma</label>
-            <input [(ngModel)]="platform" placeholder="Vinted, OLX..." />
+            <label>Marka</label>
+            <input [(ngModel)]="brand" placeholder="Nike, Adidas..." />
           </div>
           <div class="field">
             <label>Status</label>
             <select [(ngModel)]="status">
               <option value="watching">Obserwuję</option>
-              <option value="bought">Kupione</option>
               <option value="sold">Sprzedane</option>
+              <option value="unsold">Nie sprzedane</option>
             </select>
           </div>
         </div>
         @if (status === 'sold') {
           <div class="field">
             <label>Cena sprzedaży (zł)</label>
-            <input type="number" [(ngModel)]="sellPrice" placeholder="0.00" />
+            <input type="number" [(ngModel)]="soldPrice" placeholder="Za ile faktycznie poszło" />
           </div>
         }
         <div class="field">
           <label>Notatki</label>
-          <textarea [(ngModel)]="notes" placeholder="Dodatkowe informacje..." rows="2"></textarea>
+          <textarea [(ngModel)]="notes" placeholder="Stan, dodatkowe info..." rows="2"></textarea>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn-ghost" (click)="dialogRef.close()">Anuluj</button>
-        <button class="btn-primary" (click)="save()" [disabled]="!name || !buyPrice">
+        <button class="btn-primary" (click)="save()" [disabled]="!name || !listedPrice">
           {{ data.item ? 'Zapisz' : 'Dodaj' }}
         </button>
       </div>
@@ -123,8 +123,8 @@ export class WatchedModalComponent {
 
   name = this.data.item?.name ?? '';
   link = this.data.item?.link ?? '';
-  buyPrice = this.data.item?.buyPrice ?? null as any;
-  sellPrice = this.data.item?.sellPrice ?? null as any;
+  listedPrice = this.data.item?.listedPrice ?? (null as any);
+  soldPrice = this.data.item?.soldPrice ?? (null as any);
   category = this.data.item?.category ?? '';
   size = this.data.item?.size ?? '';
   brand = this.data.item?.brand ?? '';
@@ -133,19 +133,21 @@ export class WatchedModalComponent {
   notes = this.data.item?.notes ?? '';
 
   save(): void {
-    if (!this.name || !this.buyPrice) return;
+    if (!this.name || !this.listedPrice) return;
     const result: Partial<WatchedItem> = {
       name: this.name.trim(),
       link: this.link.trim() || undefined,
-      buyPrice: +this.buyPrice,
-      sellPrice: this.sellPrice ? +this.sellPrice : undefined,
+      listedPrice: +this.listedPrice,
+      soldPrice: this.status === 'sold' && this.soldPrice ? +this.soldPrice : undefined,
       category: this.category.trim() || undefined,
       size: this.size.trim() || undefined,
       brand: this.brand.trim() || undefined,
       platform: this.platform.trim() || undefined,
       status: this.status,
+      soldDate: this.status === 'sold'
+        ? (this.data.item?.soldDate ?? new Date().toISOString().slice(0, 10))
+        : undefined,
       notes: this.notes.trim() || undefined,
-      soldDate: this.status === 'sold' ? (this.data.item?.soldDate ?? new Date().toISOString().slice(0, 10)) : undefined,
     };
     this.dialogRef.close(result);
   }

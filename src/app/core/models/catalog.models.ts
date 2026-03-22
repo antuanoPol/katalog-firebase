@@ -50,9 +50,9 @@ export interface WatchedItem {
   id: string;
   name: string;
   link?: string;
-  buyPrice: number;
-  sellPrice?: number;
-  status: 'watching' | 'bought' | 'sold';
+  listedPrice: number;  // cena wywoławcza ogłoszenia
+  soldPrice?: number;   // cena za którą się sprzedało (wpisywana gdy sprzedane)
+  status: 'watching' | 'sold' | 'unsold';
   category?: string;
   size?: string;
   brand?: string;
