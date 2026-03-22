@@ -35,6 +35,9 @@ import { Product } from '../../core/models/catalog.models';
             <mat-icon>check_box</mat-icon> Do paczki
           </button>
         }
+        <button class="tool-btn watched-btn" (click)="router.navigate(['/watched'])">
+          <mat-icon>visibility</mat-icon><span class="watched-label"> Obserwowane</span>
+        </button>
         <!-- Search + Sort (right-aligned group) -->
         <div class="toolbar-right">
           <div class="search-box">
@@ -60,9 +63,6 @@ import { Product } from '../../core/models/catalog.models';
                 Masa {{ sortField() === 'mass' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
               </button>
             </div>
-            <button class="tool-btn watched-btn" (click)="router.navigate(['/watched'])">
-              <mat-icon>visibility</mat-icon><span class="watched-label"> Obserwowane</span>
-            </button>
             @if (data.products().length > 0) {
               <span class="prod-count-chip">{{ data.products().length }} szt.</span>
             }
