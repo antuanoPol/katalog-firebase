@@ -157,9 +157,10 @@ import { DataService } from '../../core/services/data.service';
     </div>
   `,
   styles: [`
+    :host { display: block; height: 100%; }
     .watched-page { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
     .w-fixed { flex-shrink: 0; background: var(--surface); border-bottom: 1px solid var(--border); }
-    .w-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; padding-bottom: 80px; }
+    .w-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; padding-bottom: 16px; }
 
     /* Toolbar */
     .w-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px 8px; }

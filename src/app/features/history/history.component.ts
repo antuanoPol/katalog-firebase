@@ -124,6 +124,7 @@ interface MonthStat {
     </div>
   `,
   styles: [`
+    :host { display: block; height: 100%; }
     .history-page {
       display: flex; flex-direction: column; height: 100%; overflow: hidden;
     }
@@ -136,7 +137,7 @@ interface MonthStat {
       flex: 1; min-height: 0;
       overflow-y: auto; overscroll-behavior: contain;
       touch-action: pan-y;
-      padding-bottom: 80px;
+      padding-bottom: 16px;
     }
     .h-toolbar {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
