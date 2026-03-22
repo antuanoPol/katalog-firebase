@@ -127,7 +127,7 @@ interface MonthStat {
     </div>
   `,
   styles: [`
-    .history-page { padding-bottom: 80px; animation: fadeUp .3s ease; }
+    .history-page { padding-bottom: 80px; }
     .h-sticky-top {
       position: sticky; top: 0; z-index: 9;
       background: var(--surface);

@@ -146,7 +146,6 @@ import { Product } from '../../core/models/catalog.models';
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 9;
-      animation: fadeUp .3s ease;
     }
     .tool-btn {
       display: inline-flex; align-items: center; gap: 6px;

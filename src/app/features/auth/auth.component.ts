@@ -77,8 +77,9 @@ import { AuthService } from '../../core/services/auth.service';
   `,
   styles: [`
     .auth-bg {
-      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      height: 100dvh; display: flex; align-items: center; justify-content: center;
       background: var(--bg); padding: 20px;
+      overflow: hidden; overscroll-behavior: none;
     }
     .auth-card {
       width: 100%; max-width: 380px;

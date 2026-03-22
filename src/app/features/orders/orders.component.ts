@@ -82,7 +82,6 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/c
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       padding: 10px 16px 0;
-      animation: fadeUp .3s ease;
     }
     .orders-title-row {
       display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
