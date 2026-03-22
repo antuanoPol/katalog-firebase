@@ -283,7 +283,7 @@ export class CatalogComponent {
   private notify = inject(NotificationService);
   router = inject(Router);
 
-  observedCount = computed(() => Object.values(this.data.observedPrices()).filter(v => v > 0).length);
+  observedCount = computed(() => Object.values(this.data.observedPrices()).filter(v => v.length > 0).length);
 
   selectMode = signal(false);
   selectedIds = signal<Set<string>>(new Set());

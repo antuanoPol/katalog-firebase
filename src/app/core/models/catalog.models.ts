@@ -51,7 +51,7 @@ export interface AppState {
   products: Product[];
   orders: Order[];
   sales?: SaleRecord[];
-  observedPrices?: Record<string, number>;
+  observedPrices?: Record<string, number[]>;
 }
 
 export interface OrderRowCalc {

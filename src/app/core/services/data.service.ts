@@ -37,7 +37,7 @@ export class DataService {
   readonly products = signal<Product[]>([]);
   readonly orders = signal<Order[]>([]);
   readonly sales = signal<SaleRecord[]>([]);
-  readonly observedPrices = signal<Record<string, number>>({});
+  readonly observedPrices = signal<Record<string, number[]>>({});
   readonly syncState = signal<'online' | 'syncing' | 'offline'>('online');
 
   readonly productCount = computed(() => this.products().length);
@@ -227,8 +227,16 @@ export class DataService {
   }
 
   // ── Observed prices ──────────────────────────────────────────────
-  setObservedPrice(productId: string, price: number): void {
-    this.mutate(() => this.observedPrices.update(p => ({ ...p, [productId]: price })));
+  addObservedPrice(productId: string, price: number): void {
+    this.mutate(() => this.observedPrices.update(p => ({
+      ...p, [productId]: [...(p[productId] ?? []), price],
+    })));
+  }
+
+  removeObservedPrice(productId: string, index: number): void {
+    this.mutate(() => this.observedPrices.update(p => ({
+      ...p, [productId]: (p[productId] ?? []).filter((_, i) => i !== index),
+    })));
   }
 
   // ── Import / Export ─────────────────────────────────────────────
@@ -283,7 +291,12 @@ export class DataService {
     this.products.set(data.products ?? []);
     this.orders.set(data.orders ?? []);
     this.sales.set(data.sales ?? []);
-    this.observedPrices.set(data.observedPrices ?? {});
+    const raw = data.observedPrices ?? {};
+    const normalized: Record<string, number[]> = {};
+    for (const [k, v] of Object.entries(raw)) {
+      normalized[k] = Array.isArray(v) ? v : (typeof v === 'number' && v > 0 ? [v] : []);
+    }
+    this.observedPrices.set(normalized);
   }
 
   private snapshot(): AppState {
