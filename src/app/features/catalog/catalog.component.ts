@@ -35,6 +35,10 @@ import { Product } from '../../core/models/catalog.models';
             <mat-icon>check_box</mat-icon> Do paczki
           </button>
         }
+        <!-- Desktop only: watched button next to Do paczki -->
+        <button class="tool-btn watched-btn desktop-watched" (click)="router.navigate(['/watched'])">
+          <mat-icon>visibility</mat-icon> Obserwowane
+        </button>
         <!-- Search + Sort (right-aligned group) -->
         <div class="toolbar-right">
           <div class="search-box">
@@ -60,8 +64,9 @@ import { Product } from '../../core/models/catalog.models';
                 Masa {{ sortField() === 'mass' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
               </button>
             </div>
-            <button class="tool-btn watched-btn" (click)="router.navigate(['/watched'])">
-              <mat-icon>visibility</mat-icon><span class="watched-label"> Obserwowane</span>
+            <!-- Mobile only: watched icon in sort row -->
+            <button class="tool-btn watched-btn mobile-watched" (click)="router.navigate(['/watched'])">
+              <mat-icon>visibility</mat-icon>
             </button>
             @if (data.products().length > 0) {
               <span class="prod-count-chip">{{ data.products().length }} szt.</span>
@@ -184,10 +189,15 @@ import { Product } from '../../core/models/catalog.models';
       justify-content: flex-end; flex-wrap: wrap;
     }
     .sort-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .desktop-watched { display: none; }
+    .mobile-watched { display: inline-flex; }
+    @media (min-width: 768px) {
+      .desktop-watched { display: inline-flex; }
+      .mobile-watched { display: none; }
+    }
     @media (max-width: 767px) {
       .catalog-toolbar { padding: 8px 10px; gap: 6px; }
       .tool-btn { padding: 7px 12px; font-size: 12px; }
-      .watched-label { display: none; }
       .tool-btn.watched-btn { padding: 7px 9px; }
       .toolbar-right { flex-basis: 100%; flex-direction: column; align-items: stretch; gap: 6px; }
       .search-box { max-width: 100%; min-width: 0; height: 42px; }
