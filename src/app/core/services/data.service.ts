@@ -153,9 +153,27 @@ export class DataService {
       color: COLORS[colorIndex],
       delivery: 0,
       otherFees: 0,
-      items: productIds.map(prodId => ({ prodId, sellPrice: 0 })),
+      items: productIds.map(prodId => ({ itemId: crypto.randomUUID(), prodId, sellPrice: 0 })),
     };
     this.mutate(() => this.orders.update(orders => [...orders, order]));
+  }
+
+  addProductsToOrder(orderId: string, productIds: string[]): void {
+    this.mutate(() => this.orders.update(orders =>
+      orders.map(o => o.id === orderId ? {
+        ...o,
+        items: [...o.items, ...productIds.map(prodId => ({ itemId: crypto.randomUUID(), prodId, sellPrice: 0 }))]
+      } : o)
+    ));
+  }
+
+  removeOrderItem(orderId: string, itemId: string): void {
+    this.mutate(() => this.orders.update(orders =>
+      orders.map(o => o.id === orderId ? {
+        ...o,
+        items: o.items.filter(it => (it.itemId ?? it.prodId) !== itemId)
+      } : o)
+    ));
   }
 
   updateOrderFee(orderId: string, field: 'delivery' | 'otherFees', value: number): void {
@@ -164,13 +182,19 @@ export class DataService {
     ));
   }
 
-  updateSellPrice(orderId: string, prodId: string, value: number): void {
+  updateSellPrice(orderId: string, itemId: string, value: number): void {
     this.mutate(() => {
+      // Resolve prodId from itemId (itemId may equal prodId for old items without itemId)
+      const ord0 = this.orders().find(o => o.id === orderId);
+      const item = ord0?.items.find(it => (it.itemId ?? it.prodId) === itemId);
+      const prodId = item?.prodId;
+      if (!prodId) return;
+
       // 1. Update the order item
       this.orders.update(orders =>
         orders.map(o => o.id === orderId ? {
           ...o,
-          items: o.items.map(it => it.prodId === prodId ? { ...it, sellPrice: value } : it)
+          items: o.items.map(it => (it.itemId ?? it.prodId) === itemId ? { ...it, sellPrice: value } : it)
         } : o)
       );
 

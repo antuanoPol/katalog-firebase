@@ -117,7 +117,7 @@ import { DataService } from '../../../core/services/data.service';
                 <input matInput type="number" [value]="r.item.sellPrice || ''"
                   placeholder="0.00"
                   (focus)="$any($event.target).select()"
-                  (change)="onSellPrice(r.product.id, +$any($event.target).value)" />
+                  (change)="onSellPrice(r.item, +$any($event.target).value)" />
               </mat-form-field>
             </td>
           </ng-container>
@@ -127,6 +127,14 @@ import { DataService } from '../../../core/services/data.service';
               [class.profit-pos]="r.profit !== null && r.profit >= 0"
               [class.profit-neg]="r.profit !== null && r.profit < 0">
               {{ r.profit !== null ? (r.profit | number:'1.2-2') : '—' }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="remove">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let r">
+              <button mat-icon-button class="remove-btn" (click)="onRemoveItem(r.item)" title="Usuń z zamówienia">
+                <mat-icon>remove_circle_outline</mat-icon>
+              </button>
             </td>
           </ng-container>
 
@@ -208,6 +216,8 @@ import { DataService } from '../../../core/services/data.service';
     .stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; }
     .stat-value { font-size: 15px; font-weight: 700; margin-top: 5px; color: var(--text); }
     .stat-currency { font-size: 11px; font-weight: 400; color: var(--text-muted); }
+    .remove-btn { color: var(--danger, #f43f5e) !important; opacity: .5; transition: opacity .2s; }
+    .remove-btn:hover { opacity: 1; }
   `],
 })
 export class OrderDetailComponent {
@@ -226,7 +236,7 @@ export class OrderDetailComponent {
     }
   }
 
-  displayedColumns = ['no', 'name', 'price', 'mass', 'delivery', 'other', 'cost', 'sell', 'profit'];
+  displayedColumns = ['no', 'name', 'price', 'mass', 'delivery', 'other', 'cost', 'sell', 'profit', 'remove'];
 
   rows = computed<OrderRowCalc[]>(() => {
     const ord = this.order();
@@ -263,8 +273,12 @@ export class OrderDetailComponent {
     });
   });
 
-  onSellPrice(prodId: string, value: number): void {
-    this.data.updateSellPrice(this.order().id, prodId, value);
+  onSellPrice(item: import('../../../core/models/catalog.models').OrderItem, value: number): void {
+    this.data.updateSellPrice(this.order().id, item.itemId ?? item.prodId, value);
+  }
+
+  onRemoveItem(item: import('../../../core/models/catalog.models').OrderItem): void {
+    this.data.removeOrderItem(this.order().id, item.itemId ?? item.prodId);
   }
 
   totalBuy = computed(() => this.rows().reduce((s, r) => s + (r.product.price ?? 0), 0));
