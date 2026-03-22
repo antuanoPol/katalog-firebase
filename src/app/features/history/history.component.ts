@@ -53,17 +53,15 @@ interface MonthStat {
             Zysk {{ sortField() === 'profit' ? (sortDir() === 'asc' ? '↑' : '↓') : '' }}
           </button>
         </div>
-      </div>
-      </div><!-- /h-sticky-top -->
 
       <!-- Stats cards -->
       <div class="stats-row">
         <div class="stat-card">
-          <div class="stat-val">{{ totalRevenue() | number:'1.2-2' }} zł</div>
+          <div class="stat-val">{{ totalRevenue() | number:'1.0-0' }} zł</div>
           <div class="stat-label">Przychód</div>
         </div>
         <div class="stat-card profit">
-          <div class="stat-val">{{ totalProfit() | number:'1.2-2' }} zł</div>
+          <div class="stat-val">{{ totalProfit() | number:'1.0-0' }} zł</div>
           <div class="stat-label">Zysk</div>
         </div>
         <div class="stat-card">
@@ -71,6 +69,7 @@ interface MonthStat {
           <div class="stat-label">Transakcji</div>
         </div>
       </div>
+      </div><!-- /h-sticky-top -->
 
       <!-- Monthly chart -->
       @if (monthStats().length > 0) {
@@ -158,14 +157,14 @@ interface MonthStat {
     .sort-btn.active { border-color: var(--border-amber); color: var(--primary); background: rgba(255,193,7,.08); }
     .sort-btn:hover { border-color: var(--border-amber); color: var(--primary); }
     .empty-hint { font-size: 12px; color: var(--text-muted); margin: 0; }
-    .stats-row { display: flex; gap: 10px; padding: 12px 16px; flex-wrap: wrap; border-top: 1px solid var(--border); }
+    .stats-row { display: flex; gap: 8px; padding: 8px 16px 12px; }
     .stat-card {
-      flex: 1; min-width: 90px; background: var(--surface-2);
-      border: 1px solid var(--border); border-radius: 12px;
-      padding: 12px 10px; text-align: center;
+      flex: 1; min-width: 0; background: var(--surface-2);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 8px 8px; text-align: center;
     }
     .stat-card.profit { border-color: rgba(74,222,128,.3); }
-    .stat-val { font-size: clamp(11px, 3.5vw, 22px); font-weight: 800; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stat-val { font-size: clamp(12px, 3.8vw, 20px); font-weight: 800; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .stat-card.profit .stat-val { color: #4ade80; }
     .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin-top: 4px; }
     .chart-section { margin: 0 16px 16px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
