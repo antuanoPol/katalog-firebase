@@ -67,10 +67,10 @@ import { Product } from '../../core/models/catalog.models';
       } @else {
         <div class="select-toolbar">
           <span class="select-badge">{{ selectedIds().size }} zaznaczone</span>
-          <button class="tool-btn ghost" (click)="cancelSelect()">
+          <button class="tool-btn ghost cancel-btn" (click)="cancelSelect()">
             <mat-icon>close</mat-icon> Anuluj
           </button>
-          <button class="tool-btn primary" (click)="openOrderModal()"
+          <button class="tool-btn primary order-btn" (click)="openOrderModal()"
             [disabled]="selectedIds().size === 0">
             <mat-icon>local_shipping</mat-icon> Utwórz zamówienie
           </button>
@@ -180,7 +180,7 @@ import { Product } from '../../core/models/catalog.models';
       .catalog-toolbar { padding: 8px 10px; gap: 6px; }
       .tool-btn { padding: 7px 12px; font-size: 12px; }
       .toolbar-right { flex-basis: 100%; flex-direction: column; align-items: stretch; gap: 6px; }
-      .search-box { max-width: 100%; min-width: 0; }
+      .search-box { max-width: 100%; min-width: 0; height: 42px; }
       .sort-row { justify-content: space-between; }
     }
     .prod-count-chip {
@@ -206,7 +206,12 @@ import { Product } from '../../core/models/catalog.models';
     .select-badge {
       font-weight: 700; color: var(--primary); font-size: 13px; letter-spacing: .04em;
       background: var(--primary-glow); border: 1px solid var(--border-amber);
-      padding: 4px 12px; border-radius: 20px;
+      padding: 4px 12px; border-radius: 20px; flex-shrink: 0;
+    }
+    .cancel-btn { margin-left: auto; flex-shrink: 0; }
+    .order-btn { justify-content: center; }
+    @media (max-width: 767px) {
+      .order-btn { flex: 1 0 100%; }
     }
     .search-box {
       display: flex; align-items: center; gap: 6px;
