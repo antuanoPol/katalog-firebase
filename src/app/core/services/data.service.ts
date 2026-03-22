@@ -66,13 +66,6 @@ export class DataService {
         data = SAMPLE_DATA;
         await setDoc(ref, this.stripImages(SAMPLE_DATA));
       }
-      // Merge images from localStorage (images are not stored in Firestore)
-      const cached = localStorage.getItem('katalog_cache');
-      if (cached) {
-        const local = JSON.parse(cached) as AppState;
-        const imgMap = new Map(local.products?.map(p => [p.id, { img: p.img, imgs: p.imgs }]) ?? []);
-        data.products = (data.products ?? []).map(p => ({ ...p, ...(imgMap.get(p.id) ?? {}) }));
-      }
       this.applyState(data);
       this.syncState.set('online');
       localStorage.setItem('katalog_cache', JSON.stringify(data));
