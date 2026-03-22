@@ -346,7 +346,8 @@ export class DataService {
       const ref = doc(this.firestore, `users/${this.uid}/katalog`, 'katalog');
       await setDoc(ref, this.snapshot());
       this.syncState.set('online');
-    } catch {
+    } catch (err) {
+      console.error('[Firestore sync error]', err);
       this.syncState.set('offline');
       this.notify.notify('Błąd synchronizacji — dane lokalne zachowane');
     }
