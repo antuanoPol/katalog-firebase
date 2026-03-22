@@ -22,8 +22,8 @@ interface MonthStat {
   template: `
     <div class="history-page">
 
-      <!-- Sticky: toolbar + stats -->
-      <div class="h-sticky-top">
+      <!-- Fixed top: toolbar + stats + chart -->
+      <div class="h-fixed">
         <div class="h-toolbar">
           <span class="h-title">Historia sprzedaży</span>
           <div class="search-box">
@@ -66,68 +66,77 @@ interface MonthStat {
             <div class="stat-label">Transakcji</div>
           </div>
         </div>
-      </div><!-- /h-sticky-top -->
+        @if (monthStats().length > 0) {
+          <div class="chart-section">
+            <div class="chart-title">Miesięczne przychody</div>
+            <div class="chart-bars">
+              @for (m of chartMonths(); track m.key) {
+                <div class="bar-col">
+                  <div class="bar-wrap">
+                    <div class="bar profit-bar"
+                      [style.height.%]="barHeight(m.profit)"
+                      [title]="(m.profit | number:'1.2-2') + ' zł'">
+                    </div>
+                  </div>
+                  <div class="bar-label">{{ m.label }}</div>
+                  <div class="bar-val">{{ m.profit | number:'1.0-0' }} zł</div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div><!-- /h-fixed -->
 
-      <!-- Monthly chart -->
-      @if (monthStats().length > 0) {
-        <div class="chart-section">
-          <div class="chart-title">Miesięczne przychody</div>
-          <div class="chart-bars">
-            @for (m of chartMonths(); track m.key) {
-              <div class="bar-col">
-                <div class="bar-wrap">
-                  <div class="bar profit-bar"
-                    [style.height.%]="barHeight(m.profit)"
-                    [title]="(m.profit | number:'1.2-2') + ' zł'">
+      <!-- Scrollable: only sales list -->
+      <div class="sales-scroll">
+        @if (data.sales().length === 0) {
+          <div class="empty-state">
+            <mat-icon>point_of_sale</mat-icon>
+            <p>Brak zapisanych sprzedaży</p>
+            <p class="empty-hint">Uzupełnij cenę sprzedaży w zakładce Zamówienia</p>
+          </div>
+        } @else {
+          <div class="sales-list">
+            @for (sale of sortedSales(); track sale.id) {
+              <div class="sale-item">
+                <div class="sale-info">
+                  <div class="sale-name">{{ sale.productName }}</div>
+                  <div class="sale-meta">
+                    <span class="sale-date">{{ formatDate(sale.date) }}</span>
+                    <span class="sale-platform badge">{{ sale.platform }}</span>
                   </div>
                 </div>
-                <div class="bar-label">{{ m.label }}</div>
-                <div class="bar-val">{{ m.profit | number:'1.0-0' }} zł</div>
+                <div class="sale-prices">
+                  <div class="sale-sell">{{ sale.sellPrice | number:'1.2-2' }} zł</div>
+                  <div class="sale-profit" [class.negative]="(sale.sellPrice - sale.productCost) < 0">
+                    {{ (sale.sellPrice - sale.productCost) >= 0 ? '+' : '' }}{{ (sale.sellPrice - sale.productCost) | number:'1.2-2' }} zł
+                  </div>
+                </div>
+                <button mat-icon-button (click)="onDelete(sale)" class="del-btn">
+                  <mat-icon>delete</mat-icon>
+                </button>
               </div>
             }
           </div>
-        </div>
-      }
+        }
+      </div><!-- /sales-scroll -->
 
-      <!-- Sales list -->
-      @if (data.sales().length === 0) {
-        <div class="empty-state">
-          <mat-icon>point_of_sale</mat-icon>
-          <p>Brak zapisanych sprzedaży</p>
-          <p class="empty-hint">Uzupełnij cenę sprzedaży w zakładce Zamówienia</p>
-        </div>
-      } @else {
-        <div class="sales-list">
-          @for (sale of sortedSales(); track sale.id) {
-            <div class="sale-item">
-              <div class="sale-info">
-                <div class="sale-name">{{ sale.productName }}</div>
-                <div class="sale-meta">
-                  <span class="sale-date">{{ formatDate(sale.date) }}</span>
-                  <span class="sale-platform badge">{{ sale.platform }}</span>
-                </div>
-              </div>
-              <div class="sale-prices">
-                <div class="sale-sell">{{ sale.sellPrice | number:'1.2-2' }} zł</div>
-                <div class="sale-profit" [class.negative]="(sale.sellPrice - sale.productCost) < 0">
-                  {{ (sale.sellPrice - sale.productCost) >= 0 ? '+' : '' }}{{ (sale.sellPrice - sale.productCost) | number:'1.2-2' }} zł
-                </div>
-              </div>
-              <button mat-icon-button (click)="onDelete(sale)" class="del-btn">
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
-          }
-        </div>
-      }
     </div>
   `,
   styles: [`
-    .history-page { padding-bottom: 80px; }
-    .h-sticky-top {
-      position: sticky; top: 0; z-index: 9;
+    .history-page {
+      display: flex; flex-direction: column; height: 100%; overflow: hidden;
+    }
+    .h-fixed {
+      flex-shrink: 0;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
+    }
+    .sales-scroll {
+      flex: 1; min-height: 0;
+      overflow-y: auto; overscroll-behavior: contain;
+      touch-action: pan-y;
+      padding-bottom: 80px;
     }
     .h-toolbar {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
