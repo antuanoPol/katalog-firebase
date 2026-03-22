@@ -222,6 +222,12 @@ body {
 [data-theme="dark"] .mat-mdc-tab-indicator .mdc-tab-indicator__content { border-color: var(--primary) !important; }
 
 
+/* Fix: allow vertical scroll when touching icon buttons on mobile */
+.mat-mdc-icon-button,
+.mat-mdc-icon-button .mat-mdc-button-touch-target {
+  touch-action: pan-y !important;
+}
+
 /* ═══════════════════════════════════════════════════════════
    LIGHT THEME — Material adjustments
    ═══════════════════════════════════════════════════════════ */
