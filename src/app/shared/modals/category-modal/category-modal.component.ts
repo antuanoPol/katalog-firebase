@@ -24,7 +24,7 @@ import { NotificationService } from '../../../core/services/notification.service
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-stroked-button color="primary" mat-dialog-close>Anuluj</button>
+      <button mat-stroked-button mat-dialog-close style="color:var(--text);border-color:var(--border)">Anuluj</button>
       <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid">Dodaj</button>
     </mat-dialog-actions>
   `,

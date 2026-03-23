@@ -163,6 +163,13 @@ import { DataService } from '../../../core/services/data.service';
             {{ totalProfit() | number:'1.2-2' }} <span class="stat-currency">zł</span>
           </div>
         </div>
+        <div class="stat-cell">
+          <div class="stat-label">MASA PACZKI</div>
+          <div class="stat-value">
+            {{ totalMass() >= 1000 ? (totalMass() / 1000 | number:'1.2-2') : totalMass() }}
+            <span class="stat-currency">{{ totalMass() >= 1000 ? 'kg' : 'g' }}</span>
+          </div>
+        </div>
       </div>
     </div>
   `,
@@ -208,7 +215,7 @@ import { DataService } from '../../../core/services/data.service';
     .price-cell { color: var(--primary) !important; font-weight: 600; }
     .profit-pos { color: #4ade80 !important; font-weight: 700; }
     .profit-neg { color: #f43f5e !important; font-weight: 700; }
-    .order-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); }
+    .order-stats { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--border); }
     .stat-cell { padding: 14px 12px; text-align: center; border-right: 1px solid var(--border); transition: background .2s; }
     .stat-cell:last-child { border-right: none; }
     .stat-cell:hover { background: var(--surface-2); }
@@ -281,6 +288,7 @@ export class OrderDetailComponent {
     this.data.removeOrderItem(this.order().id, item.itemId ?? item.prodId);
   }
 
+  totalMass = computed(() => this.rows().reduce((s, r) => s + (r.product.mass ?? 0), 0));
   totalBuy = computed(() => this.rows().reduce((s, r) => s + (r.product.price ?? 0), 0));
   totalCost = computed(() => this.rows().reduce((s, r) => s + r.totalCost, 0));
   totalRevenue = computed(() => this.rows().reduce((s, r) => s + (r.item.sellPrice ?? 0), 0));

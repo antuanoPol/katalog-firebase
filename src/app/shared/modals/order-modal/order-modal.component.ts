@@ -50,7 +50,7 @@ export interface OrderModalData {
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-stroked-button color="primary" mat-dialog-close>Anuluj</button>
+      <button mat-stroked-button mat-dialog-close style="color:var(--text);border-color:var(--border)">Anuluj</button>
       @if (mode() === 'new') {
         <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid">Utwórz</button>
       } @else {
@@ -60,7 +60,7 @@ export interface OrderModalData {
   `,
   styles: [`
     .full-width { width: 100%; min-width: 280px; }
-    .selection-info { color: rgba(0,0,0,.6); font-size: 13px; margin-bottom: 8px; }
+    .selection-info { color: var(--text-muted); font-size: 13px; margin-bottom: 8px; }
     .mode-toggle { display: flex; gap: 6px; margin-bottom: 14px; }
     .mode-btn {
       flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc;

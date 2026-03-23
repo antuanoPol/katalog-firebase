@@ -1,5 +1,15 @@
 import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { AuthService } from './core/services/auth.service';
+
+const loggedInGuard = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (auth.user()) return router.createUrlTree(['/catalog']);
+  return true;
+};
 
 export const routes: Routes = [
   { path: '', redirectTo: 'catalog', pathMatch: 'full' },
@@ -31,6 +41,7 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./features/auth/auth.component').then(m => m.AuthComponent),
+    canActivate: [loggedInGuard],
   },
   { path: '**', redirectTo: 'catalog' },
 ];
