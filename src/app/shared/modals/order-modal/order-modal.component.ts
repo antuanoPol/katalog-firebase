@@ -50,7 +50,7 @@ export interface OrderModalData {
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Anuluj</button>
+      <button mat-stroked-button color="primary" mat-dialog-close>Anuluj</button>
       @if (mode() === 'new') {
         <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid">Utwórz</button>
       } @else {
