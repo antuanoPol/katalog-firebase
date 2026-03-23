@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, HostListener, OnInit } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -30,13 +30,18 @@ import { NotificationService } from '../../../core/services/notification.service
   `,
   styles: [`.full-width { width: 100%; } mat-dialog-content { min-width: 280px; }`],
 })
-export class CategoryModalComponent {
+export class CategoryModalComponent implements OnInit {
   private dialogRef = inject(MatDialogRef<CategoryModalComponent>);
   private data = inject(DataService);
   private notify = inject(NotificationService);
   private fb = inject(FormBuilder);
 
   form = this.fb.group({ name: ['', Validators.required] });
+
+  ngOnInit(): void { history.pushState(null, ''); }
+
+  @HostListener('window:popstate')
+  onPopState(): void { this.dialogRef.close(); }
 
   onSave(): void {
     if (this.form.invalid) return;

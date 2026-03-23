@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, HostListener, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 
@@ -20,7 +20,12 @@ export interface ConfirmDialogData {
     </mat-dialog-actions>
   `,
 })
-export class ConfirmDialogComponent {
+export class ConfirmDialogComponent implements OnInit {
   data = inject<ConfirmDialogData>(MAT_DIALOG_DATA);
   ref = inject(MatDialogRef<ConfirmDialogComponent>);
+
+  ngOnInit(): void { history.pushState(null, ''); }
+
+  @HostListener('window:popstate')
+  onPopState(): void { this.ref.close(false); }
 }

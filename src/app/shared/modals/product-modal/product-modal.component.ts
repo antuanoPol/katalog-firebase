@@ -195,6 +195,8 @@ export class ProductModalComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    history.pushState(null, '');
+
     const p = this.dialogData.product;
     if (p) {
       this.form.patchValue({ catId: p.catId, name: p.name, price: p.price, mass: p.mass, link: p.link, desc: p.desc, watched: p.watched ?? false });
@@ -220,6 +222,11 @@ export class ProductModalComponent implements OnInit {
     } finally {
       this.uploading.set(false);
     }
+  }
+
+  @HostListener('window:popstate')
+  onPopState(): void {
+    this.dialogRef.close();
   }
 
   @HostListener('paste', ['$event'])

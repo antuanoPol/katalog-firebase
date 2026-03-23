@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -70,12 +70,17 @@ export interface OrderModalData {
     .mode-btn.active { border-color: #7c3aed; background: rgba(124,58,237,.1); color: #7c3aed; }
   `],
 })
-export class OrderModalComponent {
+export class OrderModalComponent implements OnInit {
   private dialogRef = inject(MatDialogRef<OrderModalComponent>);
   dialogData: OrderModalData = inject(MAT_DIALOG_DATA);
   data = inject(DataService);
   private notify = inject(NotificationService);
   private fb = inject(FormBuilder);
+
+  ngOnInit(): void { history.pushState(null, ''); }
+
+  @HostListener('window:popstate')
+  onPopState(): void { this.dialogRef.close(); }
 
   mode = signal<'new' | 'existing'>(this.data.orders().length === 0 ? 'new' : 'new');
   selectedOrderId = '';
