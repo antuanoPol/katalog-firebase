@@ -73,7 +73,7 @@ export interface ProductModalData {
             <mat-progress-bar mode="indeterminate" style="margin-bottom: 8px; border-radius: 4px;"></mat-progress-bar>
           }
           <div class="imgs-add">
-            <button mat-stroked-button type="button" (click)="fileInput.click()" [disabled]="uploading()">
+            <button mat-stroked-button color="primary" type="button" (click)="fileInput.click()" [disabled]="uploading()">
               <mat-icon>add_photo_alternate</mat-icon> {{ uploading() ? 'Przesyłam...' : 'Dodaj zdjęcie' }}
             </button>
             <div class="url-row">
@@ -125,7 +125,7 @@ export interface ProductModalData {
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Anuluj</button>
+      <button mat-stroked-button mat-dialog-close>Anuluj</button>
       <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid || uploading()">Zapisz</button>
     </mat-dialog-actions>
   `,
@@ -165,10 +165,12 @@ export interface ProductModalData {
     .imgs-add { display: flex; flex-direction: column; gap: 6px; }
     .url-row { display: flex; align-items: center; gap: 4px; }
     .url-input {
-      flex: 1; border: 1px solid #e0e0e0; border-radius: 6px;
+      flex: 1; border: 1px solid var(--border, #555); border-radius: 6px;
       padding: 6px 10px; font-size: 12px; outline: none;
+      background: transparent; color: inherit;
     }
     .url-input:focus { border-color: #7c3aed; }
+    .url-input::placeholder { color: var(--text-muted, #888); }
   `],
 })
 export class ProductModalComponent implements OnInit {
