@@ -77,7 +77,7 @@ import { Product } from '../../../core/models/catalog.models';
       </div>
 
       <mat-dialog-actions align="end" style="padding: 8px 16px;">
-        <button mat-button mat-dialog-close>Zamknij</button>
+        <button mat-stroked-button mat-dialog-close style="color:var(--text);border-color:var(--border)">Zamknij</button>
       </mat-dialog-actions>
     </div>
   `,
