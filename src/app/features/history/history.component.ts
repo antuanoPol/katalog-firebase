@@ -26,6 +26,10 @@ interface MonthStat {
       <div class="h-fixed">
         <div class="h-toolbar">
           <span class="h-title">Historia sprzedaży</span>
+          <button mat-stroked-button style="color:var(--text);border-color:var(--border);flex-shrink:0"
+            (click)="exportMonthlyReport()" [disabled]="data.sales().length === 0">
+            <mat-icon>table_chart</mat-icon> Raport XLSX
+          </button>
           <div class="search-box">
             <mat-icon class="search-icon">search</mat-icon>
             <input class="search-input" [value]="searchQuery()"
@@ -293,6 +297,46 @@ export class HistoryComponent {
 
   formatDate(dateStr: string): string {
     return new Date(dateStr + 'T12:00:00').toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  async exportMonthlyReport(): Promise<void> {
+    const XLSX = await import('xlsx');
+    const sales = this.data.sales();
+    const monthMap = new Map<string, { revenue: number; cost: number; count: number }>();
+    for (const s of sales) {
+      const key = s.date.slice(0, 7);
+      if (!monthMap.has(key)) monthMap.set(key, { revenue: 0, cost: 0, count: 0 });
+      const m = monthMap.get(key)!;
+      m.revenue += s.sellPrice;
+      m.cost += s.productCost;
+      m.count++;
+    }
+    const monthRows: (string | number)[][] = [
+      ['Miesiąc', 'Sprzedanych', 'Przychód (zł)', 'Koszt (zł)', 'Zysk (zł)', 'Marża %'],
+    ];
+    let sumRev = 0, sumCost = 0, sumCount = 0;
+    for (const [key, m] of [...monthMap.entries()].sort()) {
+      const profit = m.revenue - m.cost;
+      const margin = m.revenue > 0 ? Math.round((profit / m.revenue) * 100) : 0;
+      const [y, mo] = key.split('-');
+      const label = new Date(+y, +mo - 1, 1).toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' });
+      monthRows.push([label, m.count, +m.revenue.toFixed(2), +m.cost.toFixed(2), +profit.toFixed(2), margin + '%']);
+      sumRev += m.revenue; sumCost += m.cost; sumCount += m.count;
+    }
+    const sumProfit = sumRev - sumCost;
+    monthRows.push(['SUMA', sumCount, +sumRev.toFixed(2), +sumCost.toFixed(2), +sumProfit.toFixed(2),
+      sumRev > 0 ? Math.round((sumProfit / sumRev) * 100) + '%' : '0%']);
+    const detailRows: (string | number)[][] = [
+      ['Data', 'Produkt', 'Platforma', 'Przychód (zł)', 'Koszt (zł)', 'Zysk (zł)'],
+    ];
+    for (const s of [...sales].sort((a, b) => a.date.localeCompare(b.date))) {
+      const profit = s.sellPrice - s.productCost;
+      detailRows.push([s.date, s.productName, s.platform, +s.sellPrice.toFixed(2), +s.productCost.toFixed(2), +profit.toFixed(2)]);
+    }
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(monthRows), 'Miesięczne');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(detailRows), 'Transakcje');
+    XLSX.writeFile(wb, `raport_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   onDelete(sale: SaleRecord): void {
