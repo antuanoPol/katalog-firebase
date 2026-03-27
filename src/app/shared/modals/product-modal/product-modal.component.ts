@@ -205,14 +205,19 @@ export class ProductModalComponent implements OnInit {
     if (!url || !this.isVintedUrl(url)) return;
     this.fetchingMeta.set(true);
     try {
-      const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
-      const json = await res.json();
-      const html: string = json.contents ?? '';
+      const html = await this.fetchViaProxy(url);
       const match = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-      if (!match) throw new Error('Brak danych');
+      if (!match) {
+        console.error('[Vinted] Brak __NEXT_DATA__ w HTML, fragment:', html.slice(0, 500));
+        throw new Error('Brak danych');
+      }
       const data = JSON.parse(match[1]);
-      const item = data?.props?.pageProps?.item ?? data?.props?.pageProps?.initialState?.item;
-      if (!item) throw new Error('Brak produktu');
+      const pp = data?.props?.pageProps;
+      const item = pp?.item ?? pp?.initialState?.item ?? pp?.initialState?.items?.[0];
+      if (!item) {
+        console.error('[Vinted] Brak item w pageProps:', JSON.stringify(pp).slice(0, 500));
+        throw new Error('Brak produktu');
+      }
       if (!this.form.value.name?.trim() && item.title) {
         this.form.patchValue({ name: item.title });
       }
@@ -230,11 +235,26 @@ export class ProductModalComponent implements OnInit {
         this.images.set(urls);
       }
       this.notify.notify('Dane pobrane z Vinted!');
-    } catch {
+    } catch (e) {
+      console.error('[Vinted fetch error]', e);
       this.notify.notify('Nie udało się pobrać danych z Vinted');
     } finally {
       this.fetchingMeta.set(false);
     }
+  }
+
+  private async fetchViaProxy(url: string): Promise<string> {
+    const proxies = [
+      () => fetch(`https://corsproxy.io/?url=${encodeURIComponent(url)}`).then(r => r.text()),
+      () => fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`).then(r => r.json()).then(j => j.contents as string),
+    ];
+    for (const attempt of proxies) {
+      try {
+        const html = await attempt();
+        if (html?.includes('__NEXT_DATA__')) return html;
+      } catch { /* próbuj następny */ }
+    }
+    throw new Error('Wszystkie proxy niedostępne');
   }
 
   form = this.fb.group({
