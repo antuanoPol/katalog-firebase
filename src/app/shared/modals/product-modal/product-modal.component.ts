@@ -107,16 +107,7 @@ export interface ProductModalData {
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Link do produktu</mat-label>
           <input matInput formControlName="link" placeholder="https://..." />
-          @if (fetchingMeta()) {
-            <mat-icon matSuffix class="spin">sync</mat-icon>
-          } @else if (isVintedUrl(form.value.link ?? '')) {
-            <button mat-icon-button matSuffix type="button" color="primary"
-              (click)="fetchFromVinted()" title="Pobierz dane z Vinted">
-              <mat-icon>cloud_download</mat-icon>
-            </button>
-          } @else {
-            <mat-icon matSuffix>link</mat-icon>
-          }
+          <mat-icon matSuffix>link</mat-icon>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
@@ -180,8 +171,6 @@ export interface ProductModalData {
     }
     .url-input:focus { border-color: #7c3aed; }
     .url-input::placeholder { color: var(--text-muted, #888); }
-    .spin { animation: spin 1s linear infinite; display: inline-block; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   `],
 })
 export class ProductModalComponent implements OnInit {
@@ -194,68 +183,6 @@ export class ProductModalComponent implements OnInit {
 
   images = signal<string[]>([]);
   uploading = signal(false);
-  fetchingMeta = signal(false);
-
-  isVintedUrl(url: string): boolean {
-    return url.includes('vinted.pl') || url.includes('vinted.com');
-  }
-
-  async fetchFromVinted(): Promise<void> {
-    const url = this.form.value.link?.trim();
-    if (!url || !this.isVintedUrl(url)) return;
-    this.fetchingMeta.set(true);
-    try {
-      const html = await this.fetchViaProxy(url);
-      const match = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-      if (!match) {
-        console.error('[Vinted] Brak __NEXT_DATA__ w HTML, fragment:', html.slice(0, 500));
-        throw new Error('Brak danych');
-      }
-      const data = JSON.parse(match[1]);
-      const pp = data?.props?.pageProps;
-      const item = pp?.item ?? pp?.initialState?.item ?? pp?.initialState?.items?.[0];
-      if (!item) {
-        console.error('[Vinted] Brak item w pageProps:', JSON.stringify(pp).slice(0, 500));
-        throw new Error('Brak produktu');
-      }
-      if (!this.form.value.name?.trim() && item.title) {
-        this.form.patchValue({ name: item.title });
-      }
-      if ((!this.form.value.price || this.form.value.price === 0) && item.price) {
-        this.form.patchValue({ price: parseFloat(item.price) || 0 });
-      }
-      if (!this.form.value.desc?.trim() && item.description) {
-        this.form.patchValue({ desc: item.description });
-      }
-      if (this.images().length === 0 && item.photos?.length) {
-        const urls: string[] = item.photos
-          .map((p: Record<string, string>) => p['full_size_url'] ?? p['url'] ?? p['thumb_url'])
-          .filter(Boolean)
-          .slice(0, 5);
-        this.images.set(urls);
-      }
-      this.notify.notify('Dane pobrane z Vinted!');
-    } catch (e) {
-      console.error('[Vinted fetch error]', e);
-      this.notify.notify('Nie udało się pobrać danych z Vinted');
-    } finally {
-      this.fetchingMeta.set(false);
-    }
-  }
-
-  private async fetchViaProxy(url: string): Promise<string> {
-    const proxies = [
-      () => fetch(`https://corsproxy.io/?url=${encodeURIComponent(url)}`).then(r => r.text()),
-      () => fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`).then(r => r.json()).then(j => j.contents as string),
-    ];
-    for (const attempt of proxies) {
-      try {
-        const html = await attempt();
-        if (html?.includes('__NEXT_DATA__')) return html;
-      } catch { /* próbuj następny */ }
-    }
-    throw new Error('Wszystkie proxy niedostępne');
-  }
 
   form = this.fb.group({
     catId: [''],
