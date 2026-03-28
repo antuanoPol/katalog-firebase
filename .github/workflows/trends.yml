@@ -17,7 +17,7 @@ jobs:
           node-version: '20'
 
       - name: Install script dependencies
-        run: npm ci
+        run: npm install
         working-directory: scripts
 
       - name: Fetch and save trends
