@@ -33,6 +33,7 @@ import { DataService } from '../../../core/services/data.service';
       </div>
 
       <!-- Fee inputs -->
+      <!-- Fee inputs row -->
       <div class="fee-inputs">
         <mat-form-field appearance="outline">
           <mat-label>Dostawa (zł)</mat-label>
@@ -41,39 +42,47 @@ import { DataService } from '../../../core/services/data.service';
             (focus)="$any($event.target).select()"
             (change)="data.updateOrderFee(order().id, 'delivery', +$any($event.target).value)" />
         </mat-form-field>
+
+        <!-- Custom fees compact button (looks like a form field) -->
+        <div class="custom-fees-field" [class.active]="feesExpanded()" (click)="feesExpanded.set(!feesExpanded())">
+          <mat-icon class="fees-icon">receipt</mat-icon>
+          <div class="fees-field-content">
+            <span class="fees-field-label">Dodatkowe opłaty</span>
+            <span class="fees-field-value">
+              @if (totalCustomFees() > 0) {
+                {{ totalCustomFees() | number:'1.2-2' }} zł
+              } @else {
+                0.00 zł
+              }
+            </span>
+          </div>
+          <mat-icon class="fees-chevron">{{ feesExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </div>
       </div>
 
-      <!-- Custom fees -->
-      <div class="custom-fees-section">
-        <div class="custom-fees-header">
-          <span class="custom-fees-title">
-            <mat-icon>receipt_long</mat-icon>
-            Dodatkowe opłaty
-            @if (totalCustomFees() > 0) {
-              <span class="fees-total-badge">{{ totalCustomFees() | number:'1.2-2' }} zł</span>
-            }
-          </span>
-          <button class="add-fee-btn" (click)="addFee()">
+      <!-- Custom fees panel (expanded) -->
+      @if (feesExpanded()) {
+        <div class="fees-panel">
+          @for (fee of (order().customFees ?? []); track fee.id) {
+            <div class="fee-row">
+              <input class="fee-name-input" [value]="fee.name" placeholder="Nazwa opłaty"
+                (click)="$event.stopPropagation()"
+                (change)="data.updateCustomFee(order().id, fee.id, 'name', $any($event.target).value)" />
+              <input class="fee-amount-input" type="number" [value]="fee.amount" min="0" step="0.01"
+                (click)="$event.stopPropagation()"
+                (focus)="$any($event.target).select()"
+                (change)="data.updateCustomFee(order().id, fee.id, 'amount', +$any($event.target).value)" />
+              <span class="fee-currency">zł</span>
+              <button class="fee-delete-btn" (click)="$event.stopPropagation(); data.removeCustomFee(order().id, fee.id)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          }
+          <button class="add-fee-btn" (click)="$event.stopPropagation(); addFee()">
             <mat-icon>add</mat-icon> Dodaj opłatę
           </button>
         </div>
-        @for (fee of (order().customFees ?? []); track fee.id) {
-          <div class="fee-row">
-            <input class="fee-name-input" [value]="fee.name" placeholder="Nazwa opłaty"
-              (change)="data.updateCustomFee(order().id, fee.id, 'name', $any($event.target).value)" />
-            <input class="fee-amount-input" type="number" [value]="fee.amount" min="0" step="0.01"
-              (focus)="$any($event.target).select()"
-              (change)="data.updateCustomFee(order().id, fee.id, 'amount', +$any($event.target).value)" />
-            <span class="fee-currency">zł</span>
-            <button class="fee-delete-btn" (click)="data.removeCustomFee(order().id, fee.id)">
-              <mat-icon>close</mat-icon>
-            </button>
-          </div>
-        }
-        @if (!(order().customFees ?? []).length) {
-          <p class="no-fees">Brak dodatkowych opłat</p>
-        }
-      </div>
+      }
 
       <!-- Search & sort toolbar -->
       <div class="table-toolbar">
@@ -215,26 +224,35 @@ import { DataService } from '../../../core/services/data.service';
     .profit-chip mat-icon { font-size: 16px; width: 16px; height: 16px; }
     .profit-chip.positive { background: rgba(74,222,128,.12); color: #4ade80; border: 1px solid rgba(74,222,128,.25); }
     .profit-chip.negative { background: rgba(244,63,94,.12); color: #f43f5e; border: 1px solid rgba(244,63,94,.25); }
-    .fee-inputs { display: flex; gap: 12px; padding: 12px 16px; flex-wrap: wrap; border-bottom: none; }
+    .fee-inputs { display: flex; gap: 12px; padding: 12px 16px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
     .fee-inputs mat-form-field { flex: 1; min-width: 140px; }
-    .custom-fees-section { padding: 8px 16px 12px; border-bottom: 1px solid var(--border); }
-    .custom-fees-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-    .custom-fees-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
-    .custom-fees-title mat-icon { font-size: 15px; width: 15px; height: 15px; color: var(--primary); }
-    .fees-total-badge { background: rgba(255,193,7,.12); border: 1px solid rgba(255,193,7,.3); color: var(--primary); border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: 0; }
-    .add-fee-btn { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .2s; }
-    .add-fee-btn mat-icon { font-size: 14px; width: 14px; height: 14px; }
-    .add-fee-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .custom-fees-field {
+      flex: 1; min-width: 140px;
+      display: flex; align-items: center; gap: 10px;
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 0 12px; height: 56px; cursor: pointer;
+      background: transparent; transition: border-color .2s;
+    }
+    .custom-fees-field:hover { border-color: var(--text-muted); }
+    .custom-fees-field.active { border-color: var(--primary); }
+    .fees-icon { font-size: 18px; width: 18px; height: 18px; color: var(--text-muted); flex-shrink: 0; }
+    .fees-field-content { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .fees-field-label { font-size: 11px; color: var(--text-muted); line-height: 1.2; }
+    .fees-field-value { font-size: 16px; font-weight: 500; color: var(--text); }
+    .fees-chevron { font-size: 18px; width: 18px; height: 18px; color: var(--text-muted); flex-shrink: 0; }
+    .fees-panel { padding: 10px 16px 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
     .fee-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
-    .fee-name-input { flex: 1; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: border-color .2s; min-width: 0; }
+    .fee-name-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: border-color .2s; min-width: 0; }
     .fee-name-input:focus { border-color: var(--border-amber); }
-    .fee-amount-input { width: 80px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; color: var(--primary); font-size: 13px; font-weight: 700; font-family: inherit; outline: none; text-align: right; transition: border-color .2s; }
+    .fee-amount-input { width: 80px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; color: var(--primary); font-size: 13px; font-weight: 700; font-family: inherit; outline: none; text-align: right; transition: border-color .2s; }
     .fee-amount-input:focus { border-color: var(--border-amber); }
     .fee-currency { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
     .fee-delete-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; padding: 2px; border-radius: 50%; transition: color .2s; }
     .fee-delete-btn mat-icon { font-size: 16px; width: 16px; height: 16px; }
     .fee-delete-btn:hover { color: #f43f5e; }
-    .no-fees { font-size: 12px; color: var(--text-muted); margin: 4px 0 0; }
+    .add-fee-btn { display: flex; align-items: center; gap: 4px; margin-top: 6px; padding: 4px 10px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .2s; }
+    .add-fee-btn mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    .add-fee-btn:hover { border-color: var(--primary); color: var(--primary); }
     .table-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
     .search-box {
       display: flex; align-items: center; gap: 6px;
@@ -276,6 +294,7 @@ export class OrderDetailComponent {
   searchQuery = signal('');
   sortField = signal<'name' | 'price' | 'cost' | 'profit'>('name');
   sortDir = signal<'asc' | 'desc'>('asc');
+  feesExpanded = signal(false);
 
   setSort(field: 'name' | 'price' | 'cost' | 'profit'): void {
     if (this.sortField() === field) {
