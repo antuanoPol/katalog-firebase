@@ -93,7 +93,7 @@ async function main() {
     addSource(newsResult,      'News',      5,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
     addSource(magazineResult,  'Magazine',  4,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
     addSource(wykopResult,     'Wykop',     6,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
-    addSource(pinterestResult, 'Pinterest', 7,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
+    addSource(pinterestResult, 'Pinterest', 14, d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
 
     const internetStyles = Object.entries(scores)
       .filter(([, d]) => d.score > 0)
