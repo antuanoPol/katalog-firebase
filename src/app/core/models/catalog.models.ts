@@ -28,12 +28,19 @@ export interface OrderColor {
   bg: string;
 }
 
+export interface CustomFee {
+  id: string;
+  name: string;
+  amount: number;
+}
+
 export interface Order {
   id: string;
   name: string;
   color: OrderColor;
   delivery: number;
   otherFees: number;
+  customFees?: CustomFee[];
   items: OrderItem[];
 }
 

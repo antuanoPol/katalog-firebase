@@ -182,6 +182,31 @@ export class DataService {
     ));
   }
 
+  addCustomFee(orderId: string, name: string, amount: number): void {
+    const fee = { id: crypto.randomUUID(), name, amount };
+    this.mutate(() => this.orders.update(orders =>
+      orders.map(o => o.id === orderId ? { ...o, customFees: [...(o.customFees ?? []), fee] } : o)
+    ));
+  }
+
+  updateCustomFee(orderId: string, feeId: string, field: 'name' | 'amount', value: string | number): void {
+    this.mutate(() => this.orders.update(orders =>
+      orders.map(o => o.id === orderId ? {
+        ...o,
+        customFees: (o.customFees ?? []).map(f => f.id === feeId ? { ...f, [field]: value } : f)
+      } : o)
+    ));
+  }
+
+  removeCustomFee(orderId: string, feeId: string): void {
+    this.mutate(() => this.orders.update(orders =>
+      orders.map(o => o.id === orderId ? {
+        ...o,
+        customFees: (o.customFees ?? []).filter(f => f.id !== feeId)
+      } : o)
+    ));
+  }
+
   updateSellPrice(orderId: string, itemId: string, value: number): void {
     this.mutate(() => {
       // Resolve prodId from itemId (itemId may equal prodId for old items without itemId)
