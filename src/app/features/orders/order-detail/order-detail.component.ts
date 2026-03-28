@@ -43,21 +43,14 @@ import { DataService } from '../../../core/services/data.service';
             (change)="data.updateOrderFee(order().id, 'delivery', +$any($event.target).value)" />
         </mat-form-field>
 
-        <!-- Custom fees compact button (looks like a form field) -->
-        <div class="custom-fees-field" [class.active]="feesExpanded()" (click)="feesExpanded.set(!feesExpanded())">
-          <mat-icon class="fees-icon">receipt</mat-icon>
-          <div class="fees-field-content">
-            <span class="fees-field-label">Dodatkowe opłaty</span>
-            <span class="fees-field-value">
-              @if (totalCustomFees() > 0) {
-                {{ totalCustomFees() | number:'1.2-2' }} zł
-              } @else {
-                0.00 zł
-              }
-            </span>
-          </div>
-          <mat-icon class="fees-chevron">{{ feesExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
-        </div>
+        <!-- Custom fees as mat-form-field (identical look to Dostawa) -->
+        <mat-form-field appearance="outline" class="fees-form-field" (click)="feesExpanded.set(!feesExpanded())">
+          <mat-label>Dodatkowe opłaty</mat-label>
+          <mat-icon matPrefix>receipt</mat-icon>
+          <input matInput readonly class="fees-readonly-input"
+            [value]="(totalCustomFees() | number:'1.2-2') + ' zł'" />
+          <mat-icon matSuffix>{{ feesExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </mat-form-field>
       </div>
 
       <!-- Custom fees panel (expanded) -->
@@ -226,20 +219,9 @@ import { DataService } from '../../../core/services/data.service';
     .profit-chip.negative { background: rgba(244,63,94,.12); color: #f43f5e; border: 1px solid rgba(244,63,94,.25); }
     .fee-inputs { display: flex; gap: 12px; padding: 12px 16px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
     .fee-inputs mat-form-field { flex: 1; min-width: 140px; }
-    .custom-fees-field {
-      flex: 1; min-width: 140px;
-      display: flex; align-items: center; gap: 10px;
-      border: 1px solid var(--border); border-radius: 4px;
-      padding: 0 12px; height: 56px; cursor: pointer;
-      background: transparent; transition: border-color .2s;
-    }
-    .custom-fees-field:hover { border-color: var(--text-muted); }
-    .custom-fees-field.active { border-color: var(--primary); }
-    .fees-icon { font-size: 18px; width: 18px; height: 18px; color: var(--text-muted); flex-shrink: 0; }
-    .fees-field-content { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-    .fees-field-label { font-size: 11px; color: var(--text-muted); line-height: 1.2; }
-    .fees-field-value { font-size: 16px; font-weight: 500; color: var(--text); }
-    .fees-chevron { font-size: 18px; width: 18px; height: 18px; color: var(--text-muted); flex-shrink: 0; }
+    .fees-form-field { flex: 1; min-width: 140px; cursor: pointer; }
+    ::ng-deep .fees-form-field input.fees-readonly-input { cursor: pointer; }
+    ::ng-deep .fees-form-field .mdc-text-field { cursor: pointer; }
     .fees-panel { padding: 10px 16px 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
     .fee-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
     .fee-name-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: border-color .2s; min-width: 0; }

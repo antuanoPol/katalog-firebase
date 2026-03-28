@@ -7,8 +7,10 @@ import { AuthService } from '../../core/services/auth.service';
 
 interface TrendsData {
   updatedAt: string;
-  googleTrends: string[];
+  wikiTrending?: string[];
+  googleTrends?: string[]; // legacy field
   vintedBrands: { title: string; itemCount: number; prettyCount: string; isLuxury: boolean }[];
+  vintedStyles?: { title: string; count: number }[];
 }
 
 @Component({
@@ -43,32 +45,49 @@ interface TrendsData {
           Ostatnia aktualizacja: {{ formatDate(trendsData()!.updatedAt) }}
         </div>
 
-        <!-- Google Trends -->
-        <div class="section">
-          <div class="section-title">
-            <mat-icon>trending_up</mat-icon>
-            Trending w Polsce (Google)
-          </div>
-          @if (trendsData()!.googleTrends.length === 0) {
-            <p class="no-data">Brak danych z Google Trends</p>
-          } @else {
+        <!-- Wikipedia Trending -->
+        @if (wikiItems().length > 0) {
+          <div class="section">
+            <div class="section-title">
+              <mat-icon>public</mat-icon>
+              Popularne w Polsce (Wikipedia)
+            </div>
             <div class="tags-list">
-              @for (term of trendsData()!.googleTrends; track term; let i = $index) {
+              @for (term of wikiItems(); track term; let i = $index) {
                 <div class="tag" [class.top3]="i < 3">
                   @if (i < 3) { <span class="rank">{{ i + 1 }}</span> }
                   {{ term }}
                 </div>
               }
             </div>
-          }
-        </div>
+          </div>
+        }
 
-        <!-- Vinted -->
+        <!-- Vinted Styles -->
+        @if ((trendsData()!.vintedStyles ?? []).length > 0) {
+          <div class="section">
+            <div class="section-title">
+              <mat-icon>style</mat-icon>
+              Popularne style na Vinted
+            </div>
+            <div class="styles-grid">
+              @for (s of trendsData()!.vintedStyles!; track s.title; let i = $index) {
+                <div class="style-card" [class.top]="i < 3">
+                  @if (i < 3) { <span class="style-rank">{{ i + 1 }}</span> }
+                  <span class="style-name">{{ s.title }}</span>
+                  <span class="style-count">{{ s.count }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Vinted Brands -->
         @if (trendsData()!.vintedBrands.length > 0) {
           <div class="section">
             <div class="section-title">
               <mat-icon>local_offer</mat-icon>
-              Popularne na Vinted
+              Popularne marki na Vinted
             </div>
             <div class="vinted-list">
               @for (item of trendsData()!.vintedBrands; track item.title; let i = $index) {
@@ -123,11 +142,9 @@ interface TrendsData {
     .section-title {
       display: flex; align-items: center; gap: 8px;
       font-size: 13px; font-weight: 700; color: var(--text-muted);
-      text-transform: uppercase; letter-spacing: .06em;
-      margin-bottom: 12px;
+      text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px;
     }
     .section-title mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--primary); }
-    .no-data { font-size: 13px; color: var(--text-muted); }
     .tags-list { display: flex; flex-wrap: wrap; gap: 8px; }
     .tag {
       display: flex; align-items: center; gap: 6px;
@@ -142,6 +159,21 @@ interface TrendsData {
       font-size: 10px; font-weight: 800;
       display: flex; align-items: center; justify-content: center;
     }
+    .styles-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .style-card {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px; border-radius: 20px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      font-size: 13px; font-weight: 600; color: var(--text);
+    }
+    .style-card.top { border-color: var(--primary); color: var(--primary); background: rgba(255,193,7,.08); }
+    .style-rank {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--primary); color: #12121f;
+      font-size: 10px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .style-count { font-size: 11px; color: var(--text-muted); font-weight: 400; }
     .vinted-list { display: flex; flex-direction: column; gap: 0; }
     .vinted-item {
       display: flex; align-items: center; gap: 12px;
@@ -161,6 +193,11 @@ export class TrendsComponent implements OnInit {
   loading = signal(true);
   enabled = signal(true);
   trendsData = signal<TrendsData | null>(null);
+
+  wikiItems() {
+    const d = this.trendsData();
+    return d?.wikiTrending ?? d?.googleTrends ?? [];
+  }
 
   async ngOnInit(): Promise<void> {
     await Promise.all([this.loadTrends(), this.loadConfig()]);
