@@ -44,12 +44,13 @@ async function main() {
   const browser = await chromium.launch({ headless: true });
   try {
     // Run all sources in parallel
-    const [googleResult, redditResult, newsResult, magazineResult, wykopResult, vintedResult] = await Promise.allSettled([
+    const [googleResult, redditResult, newsResult, magazineResult, wykopResult, pinterestResult, vintedResult] = await Promise.allSettled([
       fetchGoogleTrendsFashion(browser),
       fetchRedditFashion(),
       fetchGoogleNewsMentions(),
       fetchPolishFashionMagazines(),
       fetchWykopMentions(),
+      fetchPinterestMetrics(),
       fetchVintedStyleCounts(browser),
     ]);
 
@@ -88,10 +89,11 @@ async function main() {
       console.log(`Google Trends: ${googleResult.value.length} terms`);
     } else console.error('Google error:', googleResult.reason?.message);
 
-    addSource(redditResult,   'Reddit',   8,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
-    addSource(newsResult,     'News',     5,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
-    addSource(magazineResult, 'Magazine', 4,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
-    addSource(wykopResult,    'Wykop',    6,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
+    addSource(redditResult,    'Reddit',    8,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
+    addSource(newsResult,      'News',      5,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
+    addSource(magazineResult,  'Magazine',  4,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
+    addSource(wykopResult,     'Wykop',     6,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
+    addSource(pinterestResult, 'Pinterest', 7,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
 
     const internetStyles = Object.entries(scores)
       .filter(([, d]) => d.score > 0)
@@ -233,6 +235,62 @@ async function fetchWykopMentions() {
     const c = (text.match(new RegExp(s.kw.split(' ')[0], 'g')) ?? []).length;
     if (c > 0) counts[s.name] = c;
   }
+  return counts;
+}
+
+// ── Source 6: Pinterest Trends metrics ────────────────────────────────────
+const PINTEREST_TERM = {
+  'Vintage':       'vintage fashion',
+  'Y2K':           'y2k fashion',
+  'Retro':         'retro fashion',
+  'Boho':          'boho style',
+  'Streetwear':    'streetwear',
+  'Grunge':        'grunge fashion',
+  'Preppy':        'preppy style',
+  'Cottagecore':   'cottagecore',
+  'Dark Academia': 'dark academia',
+  'Minimalist':    'minimalist fashion',
+  'Kawaii':        'kawaii fashion',
+  'Oversized':     'oversized outfit',
+  'Hipster':       'hipster style',
+  'Punk':          'punk fashion',
+  'Gothic':        'gothic fashion',
+  'Lata 90.':      '90s fashion',
+  'Lata 80.':      '80s fashion',
+  'Elegancki':     'elegant fashion',
+  'Sportowy':      'sporty fashion',
+  'Casual':        'casual fashion',
+};
+
+async function fetchPinterestMetrics() {
+  // Step 1: get latest available date
+  const dateRes = await fetch('https://trends.pinterest.com/latest_available_date/', {
+    headers: { 'User-Agent': UA, 'Accept': 'application/json' },
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!dateRes.ok) throw new Error(`Pinterest date HTTP ${dateRes.status}`);
+  const { date: endDate } = await dateRes.json();
+
+  // Step 2: fetch metrics for all styles in one request
+  const terms = STYLES.map(s => PINTEREST_TERM[s.name] ?? s.kw);
+  const termsParam = terms.map(encodeURIComponent).join('%2C');
+  const metricsRes = await fetch(
+    `https://trends.pinterest.com/metrics/?terms=${termsParam}&country=PL&end_date=${endDate}&days=90&aggregation=2&normalize_against_group=false&predicted_days=0`,
+    { headers: { 'User-Agent': UA, 'Accept': 'application/json' }, signal: AbortSignal.timeout(15000) }
+  );
+  if (!metricsRes.ok) throw new Error(`Pinterest metrics HTTP ${metricsRes.status}`);
+  const data = await metricsRes.json();
+
+  const counts = {};
+  for (let i = 0; i < STYLES.length; i++) {
+    const item = Array.isArray(data) ? data[i] : null;
+    if (!item) continue;
+    const lastCount = item.counts?.at(-1)?.normalizedCount ?? 0;
+    const momChange = item.growth_rates?.mom_change ?? 0;
+    const score = Math.round(lastCount * 0.8 + (momChange > 0 ? momChange * 50 : 0));
+    if (score > 0) counts[STYLES[i].name] = score;
+  }
+  console.log(`Pinterest: ${Object.keys(counts).length} styles with scores`);
   return counts;
 }
 

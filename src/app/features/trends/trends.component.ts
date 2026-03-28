@@ -15,7 +15,7 @@ interface TrendsData {
 
 const SRC_COLOR: Record<string, string> = {
   Google: '#4285f4', Reddit: '#ff4500', News: '#34a853',
-  Magazine: '#e91e8c', Wykop: '#367fad',
+  Magazine: '#e91e8c', Wykop: '#367fad', Pinterest: '#e60023',
 };
 
 @Component({
@@ -187,7 +187,7 @@ export class TrendsComponent implements OnInit {
   enabled = signal(true);
   trendsData = signal<TrendsData | null>(null);
 
-  sourceKeys = ['Google', 'Reddit', 'News', 'Magazine', 'Wykop'];
+  sourceKeys = ['Google', 'Reddit', 'News', 'Magazine', 'Wykop', 'Pinterest'];
   srcColor(s: string) { return SRC_COLOR[s] ?? '#888'; }
 
   private maxInternetScore = 1;
