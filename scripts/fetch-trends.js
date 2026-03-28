@@ -8,28 +8,27 @@ const db = getFirestore();
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 
-// Known fashion styles to track
 const STYLES = [
-  { name: 'Vintage',        query: 'vintage' },
-  { name: 'Y2K',            query: 'y2k' },
-  { name: 'Retro',          query: 'retro' },
-  { name: 'Boho',           query: 'boho' },
-  { name: 'Streetwear',     query: 'streetwear' },
-  { name: 'Grunge',         query: 'grunge' },
-  { name: 'Preppy',         query: 'preppy' },
-  { name: 'Cottagecore',    query: 'cottagecore' },
-  { name: 'Dark Academia',  query: 'dark academia' },
-  { name: 'Minimalist',     query: 'minimalist' },
-  { name: 'Kawaii',         query: 'kawaii' },
-  { name: 'Oversized',      query: 'oversized' },
-  { name: 'Hipster',        query: 'hipster' },
-  { name: 'Punk',           query: 'punk' },
-  { name: 'Gothic',         query: 'gothic' },
-  { name: 'Lata 90.',       query: 'lata 90' },
-  { name: 'Lata 80.',       query: 'lata 80' },
-  { name: 'Elegancki',      query: 'elegancki styl' },
-  { name: 'Sportowy',       query: 'sportowy styl' },
-  { name: 'Casual',         query: 'casual outfit' },
+  { name: 'Vintage',       kw: 'vintage' },
+  { name: 'Y2K',           kw: 'y2k' },
+  { name: 'Retro',         kw: 'retro' },
+  { name: 'Boho',          kw: 'boho' },
+  { name: 'Streetwear',    kw: 'streetwear' },
+  { name: 'Grunge',        kw: 'grunge' },
+  { name: 'Preppy',        kw: 'preppy' },
+  { name: 'Cottagecore',   kw: 'cottagecore' },
+  { name: 'Dark Academia', kw: 'dark academia' },
+  { name: 'Minimalist',    kw: 'minimalist' },
+  { name: 'Kawaii',        kw: 'kawaii' },
+  { name: 'Oversized',     kw: 'oversized' },
+  { name: 'Hipster',       kw: 'hipster' },
+  { name: 'Punk',          kw: 'punk' },
+  { name: 'Gothic',        kw: 'gothic' },
+  { name: 'Lata 90.',      kw: '90s fashion' },
+  { name: 'Lata 80.',      kw: '80s fashion' },
+  { name: 'Elegancki',     kw: 'elegant style' },
+  { name: 'Sportowy',      kw: 'sporty style' },
+  { name: 'Casual',        kw: 'casual fashion' },
 ];
 
 async function main() {
@@ -38,212 +37,221 @@ async function main() {
     console.log('Trends disabled, skipping'); return;
   }
 
-  // Read previous fashion style snapshot for growth
-  const prevSnap = await db.collection('trends').doc('styles_snapshot').get();
-  const prevStyles = prevSnap.exists ? (prevSnap.data().data ?? {}) : {};
-  const prevSavedAt = prevSnap.exists ? prevSnap.data().savedAt : null;
-
-  // Read previous brand snapshot for growth
-  const prevBrandSnap = await db.collection('trends').doc('brands_snapshot').get();
-  const prevBrands = prevBrandSnap.exists ? (prevBrandSnap.data().data ?? {}) : {};
-  const prevBrandSavedAt = prevBrandSnap.exists ? prevBrandSnap.data().savedAt : null;
+  const prevStyleSnap = await db.collection('trends').doc('styles_snapshot').get();
+  const prevStyles = prevStyleSnap.exists ? (prevStyleSnap.data().data ?? {}) : {};
+  const prevSavedAt = prevStyleSnap.exists ? prevStyleSnap.data().savedAt : null;
 
   const browser = await chromium.launch({ headless: true });
   try {
-    const [googleResult, redditResult, vintedStylesResult, brandsResult] = await Promise.allSettled([
+    // Run all sources in parallel
+    const [googleResult, redditResult, newsResult, magazineResult, wykopResult, vintedResult] = await Promise.allSettled([
       fetchGoogleTrendsFashion(browser),
       fetchRedditFashion(),
+      fetchGoogleNewsMentions(),
+      fetchPolishFashionMagazines(),
+      fetchWykopMentions(),
       fetchVintedStyleCounts(browser),
-      fetchVintedBrands(browser),
     ]);
 
-    // ── Merge fashion trends from internet sources ──────────────────────────
-    const styleScores = {};  // name → { redditMentions, googleTrend, vintedCount, vintedGrowth }
+    // ── Build internet style scores ─────────────────────────────────────────
+    const scores = {};
+    for (const s of STYLES) scores[s.name] = { sources: [], score: 0 };
 
-    // Initialize all known styles
-    for (const s of STYLES) styleScores[s.name] = { redditMentions: 0, googleTrend: false, vintedCount: 0, vintedGrowthPct: null, vintedWeeklyEst: null };
-
-    // Add Vinted counts + growth
-    if (vintedStylesResult.status === 'fulfilled') {
-      const hoursElapsed = prevSavedAt ? (Date.now() - new Date(prevSavedAt).getTime()) / 3600000 : null;
-      for (const vs of vintedStylesResult.value) {
-        if (!styleScores[vs.name]) styleScores[vs.name] = { redditMentions: 0, googleTrend: false };
-        styleScores[vs.name].vintedCount = vs.count;
-        const prev = prevStyles[vs.name];
-        if (prev && prev > 0 && hoursElapsed && hoursElapsed > 1) {
-          const gPct = Math.round(((vs.count - prev) / prev) * 1000) / 10;
-          styleScores[vs.name].vintedGrowthPct = gPct;
-          styleScores[vs.name].vintedWeeklyEst = Math.round(gPct * (168 / hoursElapsed) * 10) / 10;
+    function addSource(resultObj, sourceName, weight, extractor) {
+      if (resultObj.status !== 'fulfilled') {
+        console.error(`${sourceName} error:`, resultObj.reason?.message);
+        return;
+      }
+      const data = extractor(resultObj.value);
+      let added = 0;
+      for (const { name, value } of data) {
+        if (!scores[name]) continue;
+        scores[name].score += value * weight;
+        if (value > 0 && !scores[name].sources.includes(sourceName)) {
+          scores[name].sources.push(sourceName);
         }
+        added += value;
       }
-      console.log(`Vinted styles: ${vintedStylesResult.value.length}`);
-    } else console.error('Vinted styles error:', vintedStylesResult.reason?.message);
+      console.log(`${sourceName}: ${added} total mentions across styles`);
+    }
 
-    // Add Reddit fashion mentions
-    if (redditResult.status === 'fulfilled') {
-      for (const [styleName, count] of Object.entries(redditResult.value)) {
-        if (styleScores[styleName]) styleScores[styleName].redditMentions = count;
-      }
-      console.log(`Reddit fashion mentions: ${JSON.stringify(redditResult.value)}`);
-    } else console.error('Reddit error:', redditResult.reason?.message);
-
-    // Mark Google Trends fashion matches
+    // Google Trends — boolean match
     if (googleResult.status === 'fulfilled') {
-      const googleLower = googleResult.value.map(t => t.toLowerCase());
+      const lower = googleResult.value.map(t => t.toLowerCase());
       for (const s of STYLES) {
-        if (googleLower.some(g => g.includes(s.query.toLowerCase()) || s.query.toLowerCase().includes(g))) {
-          if (styleScores[s.name]) styleScores[s.name].googleTrend = true;
+        const hit = lower.some(g => g.includes(s.kw.split(' ')[0]));
+        if (hit) {
+          scores[s.name].score += 20;
+          scores[s.name].sources.push('Google');
         }
       }
-      console.log(`Google fashion trends: ${googleResult.value.length}`);
+      console.log(`Google Trends: ${googleResult.value.length} terms`);
     } else console.error('Google error:', googleResult.reason?.message);
 
-    // Build final fashion trends list — score and sort
-    const fashionTrends = Object.entries(styleScores)
-      .map(([name, d]) => ({
-        name,
-        vintedCount: d.vintedCount ?? 0,
-        vintedGrowthPct: d.vintedGrowthPct ?? null,
-        vintedWeeklyEst: d.vintedWeeklyEst ?? null,
-        redditMentions: d.redditMentions ?? 0,
-        googleTrend: d.googleTrend ?? false,
-        // Score: Vinted count (normalized) + Reddit + Google bonus
-        score: Math.log10((d.vintedCount ?? 0) + 1) * 10 + (d.redditMentions ?? 0) * 8 + (d.googleTrend ? 20 : 0),
-      }))
-      .filter(t => t.vintedCount > 0 || t.redditMentions > 0 || t.googleTrend)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 20);
+    addSource(redditResult,   'Reddit',   8,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
+    addSource(newsResult,     'News',     5,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
+    addSource(magazineResult, 'Magazine', 4,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
+    addSource(wykopResult,    'Wykop',    6,  d => Object.entries(d).map(([k,v]) => ({ name: k, value: v })));
 
-    // Save new styles snapshot
-    const stylesSnapshotData = {};
-    for (const t of fashionTrends) stylesSnapshotData[t.name] = t.vintedCount;
-    await db.collection('trends').doc('styles_snapshot').set({ savedAt: new Date().toISOString(), data: stylesSnapshotData });
+    const internetStyles = Object.entries(scores)
+      .filter(([, d]) => d.score > 0)
+      .sort((a, b) => b[1].score - a[1].score)
+      .slice(0, 20)
+      .map(([name, d]) => ({ name, sources: d.sources, score: d.score }));
 
-    // ── Vinted brands with growth ───────────────────────────────────────────
-    let vintedBrands = brandsResult.status === 'fulfilled' ? brandsResult.value : [];
-    if (brandsResult.status === 'rejected') console.error('Brands error:', brandsResult.reason?.message);
+    // ── Vinted style counts + growth ────────────────────────────────────────
+    const hoursElapsed = prevSavedAt ? (Date.now() - new Date(prevSavedAt).getTime()) / 3600000 : null;
+    const rawVinted = vintedResult.status === 'fulfilled' ? vintedResult.value : [];
+    if (vintedResult.status === 'rejected') console.error('Vinted styles error:', vintedResult.reason?.message);
 
-    const hoursElapsed = prevBrandSavedAt ? (Date.now() - new Date(prevBrandSavedAt).getTime()) / 3600000 : null;
-    vintedBrands = vintedBrands.map(b => {
-      const prev = prevBrands[b.title];
-      let growthPct = null, weeklyGrowthEst = null;
-      if (prev && prev > 0 && hoursElapsed && hoursElapsed > 1) {
-        growthPct = Math.round(((b.itemCount - prev) / prev) * 1000) / 10;
-        weeklyGrowthEst = Math.round(growthPct * (168 / hoursElapsed) * 10) / 10;
-      }
-      return { ...b, growthPct, weeklyGrowthEst };
-    });
-    await db.collection('trends').doc('brands_snapshot').set({
+    const vintedStyles = rawVinted
+      .filter(s => s.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .map(s => {
+        const prev = prevStyles[s.name];
+        let growthPct = null, weeklyEst = null;
+        if (prev && prev > 0 && hoursElapsed && hoursElapsed > 1) {
+          growthPct = Math.round(((s.count - prev) / prev) * 1000) / 10;
+          weeklyEst = Math.round(growthPct * (168 / hoursElapsed) * 10) / 10;
+        }
+        return { name: s.name, count: s.count, growthPct, weeklyEst };
+      });
+
+    // Save snapshot
+    await db.collection('trends').doc('styles_snapshot').set({
       savedAt: new Date().toISOString(),
-      data: Object.fromEntries(vintedBrands.map(b => [b.title, b.itemCount])),
+      data: Object.fromEntries(rawVinted.map(s => [s.name, s.count])),
     });
 
     await db.collection('trends').doc('latest').set({
       updatedAt: new Date().toISOString(),
-      fashionTrends,
-      vintedBrands,
+      internetStyles,
+      vintedStyles,
     });
-    console.log(`Saved: ${fashionTrends.length} fashion trends, ${vintedBrands.length} brands`);
+    console.log(`Saved: ${internetStyles.length} internet styles, ${vintedStyles.length} vinted styles`);
   } finally {
     await browser.close();
   }
 }
 
-// ── Google Trends — fashion/clothing category ──────────────────────────────
+// ── Source 1: Google Trends fashion category ──────────────────────────────
 async function fetchGoogleTrendsFashion(browser) {
   const ctx = await browser.newContext({ locale: 'pl-PL', timezoneId: 'Europe/Warsaw', userAgent: UA });
   try {
     const page = await ctx.newPage();
     await page.goto('https://trends.google.com/?geo=PL', { waitUntil: 'domcontentloaded', timeout: 30000 });
-    // Try clothing category (185 = Apparel & Accessories)
-    const res = await ctx.request.get(
+    // Try cat=185 (Apparel & Accessories) first
+    for (const url of [
       'https://trends.google.com/trends/api/dailytrends?hl=pl&tz=-60&geo=PL&ns=15&cat=185',
-      { headers: { 'Accept': 'application/json' } }
-    );
-    console.log('Google fashion status:', res.status());
-    if (!res.ok()) {
-      // Fallback to general trends
-      const res2 = await ctx.request.get(
-        'https://trends.google.com/trends/api/dailytrends?hl=pl&tz=-60&geo=PL&ns=15',
-        { headers: { 'Accept': 'application/json' } }
-      );
-      if (!res2.ok()) throw new Error(`HTTP ${res2.status()}`);
-      const text = await res2.text();
+      'https://trends.google.com/trends/api/dailytrends?hl=pl&tz=-60&geo=PL&ns=15',
+    ]) {
+      const res = await ctx.request.get(url, { headers: { 'Accept': 'application/json' } });
+      if (!res.ok()) continue;
+      const text = await res.text();
       const nl = text.indexOf('\n');
-      const json = JSON.parse(text.slice(nl + 1));
-      return (json?.default?.trendingSearchesDays?.[0]?.trendingSearches ?? []).map(t => t.title?.query ?? '').filter(Boolean);
+      if (nl === -1) continue;
+      try {
+        const json = JSON.parse(text.slice(nl + 1));
+        const searches = json?.default?.trendingSearchesDays?.[0]?.trendingSearches ?? [];
+        if (searches.length) return searches.map(t => t.title?.query ?? '').filter(Boolean);
+      } catch { continue; }
     }
-    const text = await res.text();
-    const nl = text.indexOf('\n');
-    if (nl === -1) throw new Error('Bad format');
-    const json = JSON.parse(text.slice(nl + 1));
-    return (json?.default?.trendingSearchesDays?.[0]?.trendingSearches ?? []).map(t => t.title?.query ?? '').filter(Boolean);
+    return [];
   } finally { await ctx.close(); }
 }
 
-// ── Reddit fashion communities — count style keyword mentions ──────────────
+// ── Source 2: Reddit fashion communities ─────────────────────────────────
 async function fetchRedditFashion() {
-  const subs = 'femalefashionadvice+malefashionadvice+streetwear+femalefashion+Polska_modna';
-  const res = await fetch(
-    `https://www.reddit.com/r/${subs}/hot.json?limit=100`,
-    { headers: { 'User-Agent': 'TrendsBot/1.0' } }
-  );
-  if (!res.ok) throw new Error(`Reddit HTTP ${res.status}`);
+  const subs = 'femalefashionadvice+malefashionadvice+streetwear+femalefashion+fashionadvice+malefemalefashion';
+  const res = await fetch(`https://www.reddit.com/r/${subs}/hot.json?limit=100`,
+    { headers: { 'User-Agent': 'TrendsBot/1.0' } });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
-  const titles = (json.data?.children ?? [])
-    .filter(p => !p.data.stickied)
-    .map(p => (p.data.title + ' ' + (p.data.selftext ?? '')).toLowerCase());
-
+  const text = (json.data?.children ?? []).filter(p => !p.data.stickied)
+    .map(p => p.data.title.toLowerCase()).join(' ');
   const counts = {};
   for (const s of STYLES) {
-    const kw = s.query.toLowerCase().split(' ')[0]; // use first word as keyword
-    const c = titles.filter(t => t.includes(kw)).length;
+    const c = (text.match(new RegExp(s.kw.split(' ')[0], 'g')) ?? []).length;
     if (c > 0) counts[s.name] = c;
   }
   return counts;
 }
 
-// ── Vinted: count items per style query ────────────────────────────────────
+// ── Source 3: Google News RSS — one query per style (parallel) ────────────
+async function fetchGoogleNewsMentions() {
+  const results = await Promise.all(
+    STYLES.map(async s => {
+      try {
+        const q = encodeURIComponent(`${s.kw} fashion style`);
+        const res = await fetch(
+          `https://news.google.com/rss/search?q=${q}&hl=en&gl=PL&ceid=PL:en&num=10`,
+          { headers: { 'User-Agent': 'TrendsBot/1.0' }, signal: AbortSignal.timeout(10000) }
+        );
+        if (!res.ok) return [s.name, 0];
+        const text = await res.text();
+        const count = (text.match(/<item>/g) ?? []).length;
+        return [s.name, count];
+      } catch { return [s.name, 0]; }
+    })
+  );
+  return Object.fromEntries(results.filter(([, v]) => v > 0));
+}
+
+// ── Source 4: Polish fashion magazines RSS ─────────────────────────────────
+async function fetchPolishFashionMagazines() {
+  const feeds = [
+    'https://www.vogue.pl/feed',
+    'https://www.elle.pl/feed',
+    'https://www.harpersbazaar.pl/feed',
+    'https://www.cosmopolitan.com.pl/rss.xml',
+    'https://www.glamour.pl/feed',
+  ];
+  let combinedText = '';
+  await Promise.all(feeds.map(async url => {
+    try {
+      const res = await fetch(url, { headers: { 'User-Agent': 'TrendsBot/1.0' }, signal: AbortSignal.timeout(8000) });
+      if (res.ok) combinedText += (await res.text()).toLowerCase();
+    } catch {}
+  }));
+  const counts = {};
+  for (const s of STYLES) {
+    const c = (combinedText.match(new RegExp(s.kw.split(' ')[0], 'g')) ?? []).length;
+    if (c > 0) counts[s.name] = c;
+  }
+  return counts;
+}
+
+// ── Source 5: Wykop popular links ─────────────────────────────────────────
+async function fetchWykopMentions() {
+  const res = await fetch('https://wykop.pl/rss/wykopalisko',
+    { headers: { 'User-Agent': 'TrendsBot/1.0', 'Accept': 'application/rss+xml, text/xml' },
+      signal: AbortSignal.timeout(8000) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text = (await res.text()).toLowerCase();
+  const counts = {};
+  for (const s of STYLES) {
+    const c = (text.match(new RegExp(s.kw.split(' ')[0], 'g')) ?? []).length;
+    if (c > 0) counts[s.name] = c;
+  }
+  return counts;
+}
+
+// ── Vinted: count items per style (parallel) ──────────────────────────────
 async function fetchVintedStyleCounts(browser) {
   const ctx = await browser.newContext({ locale: 'pl-PL', userAgent: UA });
   try {
     const page = await ctx.newPage();
     await page.goto('https://www.vinted.pl/', { waitUntil: 'domcontentloaded', timeout: 30000 });
-
-    // Fetch all styles in parallel
-    const results = await Promise.all(
-      STYLES.map(async style => {
-        try {
-          const res = await ctx.request.get(
-            `https://www.vinted.pl/api/v2/catalog/items?search_text=${encodeURIComponent(style.query)}&per_page=1`,
-            { headers: { 'Accept': 'application/json' } }
-          );
-          if (!res.ok()) return { name: style.name, count: 0 };
-          const json = await res.json();
-          return { name: style.name, count: json.pagination?.total_count ?? 0 };
-        } catch { return { name: style.name, count: 0 }; }
-      })
-    );
-    return results;
-  } finally { await ctx.close(); }
-}
-
-// ── Vinted brands ──────────────────────────────────────────────────────────
-async function fetchVintedBrands(browser) {
-  const ctx = await browser.newContext({ locale: 'pl-PL', userAgent: UA });
-  try {
-    const page = await ctx.newPage();
-    await page.goto('https://www.vinted.pl/', { waitUntil: 'domcontentloaded', timeout: 30000 });
-    const res = await ctx.request.get(
-      'https://www.vinted.pl/api/v2/brands?page=1&per_page=20&order=popularity',
-      { headers: { 'Accept': 'application/json' } }
-    );
-    console.log('Brands status:', res.status());
-    if (!res.ok()) throw new Error(`HTTP ${res.status()}`);
-    const json = await res.json();
-    return (json.brands ?? []).slice(0, 20).map(b => ({
-      title: b.title ?? '', itemCount: b.item_count ?? 0,
-      prettyCount: b.pretty_item_count ?? '', isLuxury: b.is_luxury ?? false,
+    return await Promise.all(STYLES.map(async s => {
+      try {
+        const res = await ctx.request.get(
+          `https://www.vinted.pl/api/v2/catalog/items?search_text=${encodeURIComponent(s.kw)}&per_page=1`,
+          { headers: { 'Accept': 'application/json' } }
+        );
+        if (!res.ok()) return { name: s.name, count: 0 };
+        const json = await res.json();
+        return { name: s.name, count: json.pagination?.total_count ?? 0 };
+      } catch { return { name: s.name, count: 0 }; }
     }));
   } finally { await ctx.close(); }
 }
