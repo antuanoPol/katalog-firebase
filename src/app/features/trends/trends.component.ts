@@ -5,11 +5,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { Firestore, doc, getDoc, setDoc } from '@angular/fire/firestore';
 import { AuthService } from '../../core/services/auth.service';
 
-interface TrendItem {
-  term: string;
-  sources: string[];
+interface FashionTrend {
+  name: string;
+  vintedCount: number;
+  vintedGrowthPct: number | null;
+  vintedWeeklyEst: number | null;
+  redditMentions: number;
+  googleTrend: boolean;
   score: number;
-  breakout: boolean;
 }
 interface VintedBrand {
   title: string;
@@ -21,20 +24,9 @@ interface VintedBrand {
 }
 interface TrendsData {
   updatedAt: string;
-  internetTrends?: TrendItem[];
+  fashionTrends?: FashionTrend[];
   vintedBrands: VintedBrand[];
-  vintedStyles?: { title: string; count: number }[];
-  // legacy
-  wikiTrending?: string[];
-  googleTrends?: string[];
 }
-
-const SOURCE_LABEL: Record<string, string> = {
-  google: 'G', wiki: 'W', reddit: 'R', wykop: 'Wk',
-};
-const SOURCE_COLOR: Record<string, string> = {
-  google: '#4285f4', wiki: '#f5a623', reddit: '#ff4500', wykop: '#367fad',
-};
 
 @Component({
   selector: 'app-trends',
@@ -43,7 +35,7 @@ const SOURCE_COLOR: Record<string, string> = {
   template: `
     <div class="trends-page">
       <div class="trends-header">
-        <span class="trends-title">Trendy</span>
+        <span class="trends-title">Trendy mody</span>
         <button class="toggle-btn" [class.enabled]="enabled()" (click)="toggleEnabled()">
           <mat-icon>{{ enabled() ? 'notifications_active' : 'notifications_off' }}</mat-icon>
           {{ enabled() ? 'Auto-odświeżanie włączone' : 'Auto-odświeżanie wyłączone' }}
@@ -57,7 +49,7 @@ const SOURCE_COLOR: Record<string, string> = {
         </div>
       } @else if (!trendsData()) {
         <div class="empty-state">
-          <mat-icon>trending_up</mat-icon>
+          <mat-icon>style</mat-icon>
           <p>Brak danych o trendach</p>
           <p class="empty-hint">Uruchom workflow "Fetch Trends" ręcznie w zakładce Actions na GitHub.</p>
         </div>
@@ -67,71 +59,68 @@ const SOURCE_COLOR: Record<string, string> = {
           Ostatnia aktualizacja: {{ formatDate(trendsData()!.updatedAt) }}
         </div>
 
-        <!-- ── SECTION 1: Popularne w Internecie ────────────────────────── -->
+        <!-- ── SECTION 1: Popularne style (fashion trends) ─────────────── -->
         <div class="section">
           <div class="section-title">
-            <mat-icon>language</mat-icon>
-            Popularne w internecie
-            <div class="source-legend">
-              @for (s of sourceKeys; track s) {
-                <span class="legend-dot" [style.background]="sourceColor(s)">{{ sourceLabel(s) }}</span>
-              }
+            <mat-icon>style</mat-icon>
+            Popularne style
+            <div class="legend">
+              <span class="legend-item vinted-dot">V Vinted</span>
+              <span class="legend-item reddit-dot">R Reddit</span>
+              <span class="legend-item google-dot">G Google</span>
             </div>
           </div>
 
-          @if (internetItems().length === 0) {
-            <p class="no-data">Brak danych — uruchom workflow "Fetch Trends"</p>
+          @if (!(trendsData()!.fashionTrends ?? []).length) {
+            <p class="no-data">Brak danych — uruchom workflow</p>
           } @else {
-            <div class="trends-list">
-              @for (item of internetItems(); track item.term; let i = $index) {
-                <div class="trend-row" [class.breakout]="item.breakout">
-                  <span class="trend-rank">{{ i + 1 }}</span>
-                  <div class="trend-info">
-                    <span class="trend-term">{{ item.term }}</span>
-                    <div class="trend-sources">
-                      @for (src of item.sources; track src) {
-                        <span class="source-badge" [style.background]="sourceColor(src)">{{ sourceLabel(src) }}</span>
+            <div class="style-list">
+              @for (t of trendsData()!.fashionTrends!; track t.name; let i = $index) {
+                <div class="style-row" [class.hot]="t.googleTrend && t.redditMentions > 0">
+                  <span class="style-rank">{{ i + 1 }}</span>
+                  <div class="style-main">
+                    <div class="style-name-row">
+                      <span class="style-name">{{ t.name }}</span>
+                      <div class="style-badges">
+                        @if (t.googleTrend) {
+                          <span class="badge google">G</span>
+                        }
+                        @if (t.redditMentions > 0) {
+                          <span class="badge reddit">R×{{ t.redditMentions }}</span>
+                        }
+                        @if (t.googleTrend && t.redditMentions > 0) {
+                          <span class="badge hot-badge">
+                            <mat-icon>local_fire_department</mat-icon>Hot
+                          </span>
+                        }
+                      </div>
+                    </div>
+                    <div class="style-vinted">
+                      {{ formatCount(t.vintedCount) }} przedmiotów na Vinted
+                      @if (t.vintedWeeklyEst !== null) {
+                        <span class="growth-inline" [class.pos]="t.vintedWeeklyEst! >= 0" [class.neg]="t.vintedWeeklyEst! < 0">
+                          {{ t.vintedWeeklyEst! >= 0 ? '↑' : '↓' }}{{ t.vintedWeeklyEst | number:'1.1-1' }}%/tyg
+                        </span>
                       }
                     </div>
                   </div>
-                  @if (item.breakout) {
-                    <span class="breakout-badge">
-                      <mat-icon>local_fire_department</mat-icon>
-                      Breakout
-                    </span>
-                  } @else if (item.score >= 3) {
-                    <span class="rising-badge">
-                      <mat-icon>trending_up</mat-icon>
-                      Rośnie
-                    </span>
-                  }
+                  <!-- Mini bar showing relative popularity -->
+                  <div class="style-bar-wrap">
+                    <div class="style-bar" [style.width.%]="getBarWidth(t.vintedCount)"></div>
+                  </div>
                 </div>
               }
             </div>
           }
         </div>
 
-        <!-- ── SECTION 2: Popularne na Vinted ──────────────────────────── -->
-        <div class="section">
-          <div class="section-title">
-            <mat-icon>local_offer</mat-icon>
-            Popularne na Vinted
-          </div>
-
-          <!-- Styles chips -->
-          @if ((trendsData()!.vintedStyles ?? []).length > 0) {
-            <div class="styles-row">
-              @for (s of trendsData()!.vintedStyles!; track s.title; let i = $index) {
-                <div class="style-chip" [class.top]="i < 3">
-                  @if (i < 3) { <span class="chip-rank">{{ i + 1 }}</span> }
-                  {{ s.title }}
-                </div>
-              }
+        <!-- ── SECTION 2: Popularne marki na Vinted ───────────────────── -->
+        @if (trendsData()!.vintedBrands.length > 0) {
+          <div class="section">
+            <div class="section-title">
+              <mat-icon>local_offer</mat-icon>
+              Popularne marki na Vinted
             </div>
-          }
-
-          <!-- Brands list -->
-          @if (trendsData()!.vintedBrands.length > 0) {
             <div class="brands-list">
               @for (b of trendsData()!.vintedBrands; track b.title; let i = $index) {
                 <div class="brand-row">
@@ -142,23 +131,15 @@ const SOURCE_COLOR: Record<string, string> = {
                   </div>
                   <span class="brand-count">{{ b.prettyCount }}</span>
                   @if (b.weeklyGrowthEst !== null) {
-                    <span class="growth-badge"
-                      [class.pos]="b.weeklyGrowthEst! >= 0"
-                      [class.neg]="b.weeklyGrowthEst! < 0">
+                    <span class="growth-badge" [class.pos]="b.weeklyGrowthEst! >= 0" [class.neg]="b.weeklyGrowthEst! < 0">
                       {{ b.weeklyGrowthEst! >= 0 ? '+' : '' }}{{ b.weeklyGrowthEst | number:'1.1-1' }}%/tyg
-                    </span>
-                  } @else if (b.growthPct !== null) {
-                    <span class="growth-badge"
-                      [class.pos]="b.growthPct! >= 0"
-                      [class.neg]="b.growthPct! < 0">
-                      {{ b.growthPct! >= 0 ? '+' : '' }}{{ b.growthPct | number:'1.1-1' }}%
                     </span>
                   }
                 </div>
               }
             </div>
-          }
-        </div>
+          </div>
+        }
       }
     </div>
   `,
@@ -182,32 +163,38 @@ const SOURCE_COLOR: Record<string, string> = {
     .section-title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 12px; flex-wrap: wrap; }
     .section-title mat-icon { font-size: 15px; width: 15px; height: 15px; color: var(--primary); }
     .no-data { font-size: 13px; color: var(--text-muted); }
-    /* Source legend */
-    .source-legend { display: flex; gap: 4px; margin-left: auto; }
-    .legend-dot { padding: 1px 6px; border-radius: 6px; font-size: 10px; font-weight: 700; color: #fff; opacity: .85; }
-    /* Internet trends list */
-    .trends-list { display: flex; flex-direction: column; gap: 0; }
-    .trend-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; transition: background .15s; }
-    .trend-row:hover { background: var(--surface-2); }
-    .trend-row.breakout { background: rgba(255,100,0,.06); border-left: 3px solid #ff6400; padding-left: 8px; }
-    .trend-rank { font-size: 11px; font-weight: 700; color: var(--text-muted); width: 22px; text-align: center; flex-shrink: 0; }
-    .trend-info { flex: 1; min-width: 0; }
-    .trend-term { font-size: 13px; font-weight: 600; color: var(--text); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .trend-sources { display: flex; gap: 3px; margin-top: 2px; }
-    .source-badge { padding: 0 5px; border-radius: 4px; font-size: 9px; font-weight: 800; color: #fff; line-height: 14px; }
-    .breakout-badge { display: flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 12px; background: rgba(255,100,0,.15); color: #ff6400; font-size: 11px; font-weight: 700; flex-shrink: 0; white-space: nowrap; }
-    .breakout-badge mat-icon { font-size: 13px; width: 13px; height: 13px; }
-    .rising-badge { display: flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 12px; background: rgba(74,222,128,.1); color: #4ade80; font-size: 11px; font-weight: 700; flex-shrink: 0; white-space: nowrap; }
-    .rising-badge mat-icon { font-size: 13px; width: 13px; height: 13px; }
-    /* Vinted styles */
-    .styles-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
-    .style-chip { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 16px; background: var(--surface-2); border: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text); }
-    .style-chip.top { border-color: var(--primary); color: var(--primary); background: rgba(255,193,7,.07); }
-    .chip-rank { width: 16px; height: 16px; border-radius: 50%; background: var(--primary); color: #12121f; font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    /* Brands list */
+    /* Legend */
+    .legend { display: flex; gap: 8px; margin-left: auto; }
+    .legend-item { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 6px; }
+    .vinted-dot { background: rgba(0,168,107,.15); color: #00a86b; }
+    .reddit-dot { background: rgba(255,69,0,.15); color: #ff4500; }
+    .google-dot { background: rgba(66,133,244,.15); color: #4285f4; }
+    /* Style list */
+    .style-list { display: flex; flex-direction: column; gap: 0; }
+    .style-row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; transition: background .15s; }
+    .style-row:hover { background: var(--surface-2); }
+    .style-row.hot { background: rgba(255,100,0,.05); border-left: 3px solid #ff6400; padding-left: 6px; }
+    .style-rank { font-size: 11px; font-weight: 700; color: var(--text-muted); width: 22px; text-align: right; flex-shrink: 0; }
+    .style-main { flex: 1; min-width: 0; }
+    .style-name-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .style-name { font-size: 14px; font-weight: 700; color: var(--text); }
+    .style-badges { display: flex; align-items: center; gap: 4px; }
+    .badge { padding: 1px 6px; border-radius: 6px; font-size: 10px; font-weight: 800; }
+    .badge.google { background: rgba(66,133,244,.15); color: #4285f4; }
+    .badge.reddit { background: rgba(255,69,0,.15); color: #ff4500; }
+    .badge.hot-badge { display: flex; align-items: center; gap: 2px; background: rgba(255,100,0,.15); color: #ff6400; }
+    .badge.hot-badge mat-icon { font-size: 11px; width: 11px; height: 11px; }
+    .style-vinted { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .growth-inline { font-weight: 700; margin-left: 6px; }
+    .growth-inline.pos { color: #4ade80; }
+    .growth-inline.neg { color: #f43f5e; }
+    .style-bar-wrap { width: 80px; height: 4px; background: var(--surface-2); border-radius: 2px; flex-shrink: 0; }
+    .style-bar { height: 100%; background: var(--primary); border-radius: 2px; min-width: 2px; transition: width .3s; }
+    /* Brands */
     .brands-list { display: flex; flex-direction: column; gap: 0; }
-    .brand-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
-    .brand-rank { font-size: 11px; font-weight: 700; color: var(--text-muted); width: 22px; text-align: center; flex-shrink: 0; }
+    .brand-row { display: flex; align-items: center; gap: 10px; padding: 9px 8px; border-radius: 8px; transition: background .15s; }
+    .brand-row:hover { background: var(--surface-2); }
+    .brand-rank { font-size: 11px; font-weight: 700; color: var(--text-muted); width: 22px; text-align: right; flex-shrink: 0; }
     .brand-info { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
     .brand-name { font-size: 13px; font-weight: 600; color: var(--text); }
     .luxury-tag { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px; background: rgba(255,193,7,.15); color: var(--primary); border: 1px solid rgba(255,193,7,.3); }
@@ -225,12 +212,17 @@ export class TrendsComponent implements OnInit {
   enabled = signal(true);
   trendsData = signal<TrendsData | null>(null);
 
-  sourceKeys = ['google', 'wiki', 'reddit', 'wykop'];
-  sourceLabel(s: string) { return SOURCE_LABEL[s] ?? s; }
-  sourceColor(s: string) { return SOURCE_COLOR[s] ?? '#888'; }
+  private maxVintedCount = 0;
 
-  internetItems() {
-    return this.trendsData()?.internetTrends ?? [];
+  getBarWidth(count: number): number {
+    if (!this.maxVintedCount) return 0;
+    return Math.round((count / this.maxVintedCount) * 100);
+  }
+
+  formatCount(n: number): string {
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+    if (n >= 1_000) return (n / 1_000).toFixed(0) + 'k';
+    return String(n);
   }
 
   async ngOnInit(): Promise<void> {
@@ -241,7 +233,11 @@ export class TrendsComponent implements OnInit {
   private async loadTrends(): Promise<void> {
     try {
       const snap = await getDoc(doc(this.firestore, 'trends', 'latest'));
-      if (snap.exists()) this.trendsData.set(snap.data() as TrendsData);
+      if (snap.exists()) {
+        const data = snap.data() as TrendsData;
+        this.maxVintedCount = Math.max(...(data.fashionTrends ?? []).map(t => t.vintedCount), 1);
+        this.trendsData.set(data);
+      }
     } catch (e) { console.error('Error loading trends:', e); }
   }
 
