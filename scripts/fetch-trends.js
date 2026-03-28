@@ -136,52 +136,43 @@ async function main() {
   }
 }
 
-// ── Source 1: Google Trends fashion category ──────────────────────────────
+// ── Source 1: Google Trends (RSS feed — more stable than private API) ────────
 async function fetchGoogleTrendsFashion(browser) {
   const ctx = await browser.newContext({ locale: 'pl-PL', timezoneId: 'Europe/Warsaw', userAgent: UA });
   try {
-    const page = await ctx.newPage();
-    await page.goto('https://trends.google.com/?geo=PL', { waitUntil: 'domcontentloaded', timeout: 30000 });
-    for (const url of [
-      'https://trends.google.com/trends/api/dailytrends?hl=pl&tz=-60&geo=PL&ns=15&cat=185',
-      'https://trends.google.com/trends/api/dailytrends?hl=pl&tz=-60&geo=PL&ns=15',
-    ]) {
-      const res = await ctx.request.get(url, { headers: { 'Accept': 'application/json' } });
-      console.log(`Google Trends ${url.includes('cat') ? 'fashion' : 'general'}: HTTP ${res.status()}`);
-      if (!res.ok()) continue;
-      const text = await res.text();
-      const nl = text.indexOf('\n');
-      if (nl === -1) { console.log('Google Trends: no newline in response'); continue; }
-      try {
-        const json = JSON.parse(text.slice(nl + 1));
-        const searches = json?.default?.trendingSearchesDays?.[0]?.trendingSearches ?? [];
-        console.log(`Google Trends searches in response: ${searches.length}`);
-        if (searches.length) return searches.map(t => t.title?.query ?? '').filter(Boolean);
-      } catch (e) { console.log(`Google Trends parse error: ${e.message}`); continue; }
-    }
-    return [];
+    const res = await ctx.request.get(
+      'https://trends.google.com/trends/trendingsearches/daily/rss?geo=PL',
+      { headers: { 'Accept': 'application/rss+xml, text/xml, */*' } }
+    );
+    console.log(`Google Trends RSS: HTTP ${res.status()}`);
+    if (!res.ok()) throw new Error(`HTTP ${res.status()}`);
+    const text = await res.text();
+    const titles = [];
+    for (const m of text.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)) titles.push(m[1]);
+    if (!titles.length) for (const m of text.matchAll(/<item>[\s\S]*?<title>(.*?)<\/title>/g)) titles.push(m[1].trim());
+    const clean = titles.filter(t => !t.includes('Google') && t.length > 1).slice(0, 25);
+    console.log(`Google Trends RSS: ${clean.length} terms`);
+    return clean;
   } finally { await ctx.close(); }
 }
 
-// ── Source 2: Reddit fashion communities (via Playwright to bypass IP blocks) ──
+// ── Source 2: Reddit — scrape old.reddit.com HTML (bypasses API 403) ─────────
 async function fetchRedditFashion(browser) {
   const ctx = await browser.newContext({ locale: 'en-US', userAgent: UA });
   try {
     const page = await ctx.newPage();
-    await page.goto('https://www.reddit.com/', { waitUntil: 'domcontentloaded', timeout: 20000 });
-    const subs = 'femalefashionadvice+malefashionadvice+streetwear+femalefashion+fashionadvice';
-    const res = await ctx.request.get(
-      `https://www.reddit.com/r/${subs}/hot.json?limit=100`,
-      { headers: { 'Accept': 'application/json' } }
+    const subs = 'femalefashionadvice+malefashionadvice+streetwear+femalefashion';
+    await page.goto(`https://old.reddit.com/r/${subs}/`, { waitUntil: 'domcontentloaded', timeout: 25000 });
+    console.log(`Reddit page URL: ${page.url()}`);
+    const titles = await page.evaluate(() =>
+      [...document.querySelectorAll('p.title a.title, .Post h3, [data-testid="post-title"]')]
+        .map(el => el.textContent.toLowerCase())
     );
-    console.log(`Reddit API: HTTP ${res.status()}`);
-    if (!res.ok()) throw new Error(`HTTP ${res.status()}`);
-    const json = await res.json();
-    const text = (json.data?.children ?? []).filter(p => !p.data.stickied)
-      .map(p => p.data.title.toLowerCase()).join(' ');
+    console.log(`Reddit: ${titles.length} posts`);
+    const text = titles.join(' ');
     const counts = {};
     for (const s of STYLES) {
-      const c = (text.match(new RegExp(s.kw.split(' ')[0], 'g')) ?? []).length;
+      const c = (text.match(new RegExp(s.kw.split(' ')[0], 'gi')) ?? []).length;
       if (c > 0) counts[s.name] = c;
     }
     return counts;
@@ -281,45 +272,37 @@ const PINTEREST_TERM = {
 };
 
 async function fetchPinterestMetrics() {
-  // Step 1: get latest available date
-  const dateRes = await fetch('https://trends.pinterest.com/latest_available_date/', {
-    headers: { 'User-Agent': UA, 'Accept': 'application/json' },
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!dateRes.ok) throw new Error(`Pinterest date HTTP ${dateRes.status}`);
-  const { date: endDate } = await dateRes.json();
-  console.log(`Pinterest end_date: ${endDate}`);
+  // Use top_trends_filtered — returns trending topics without needing specific terms
+  const headers = {
+    'User-Agent': UA, 'Accept': 'application/json',
+    'Referer': 'https://trends.pinterest.com/',
+    'Origin': 'https://trends.pinterest.com',
+  };
 
-  // Step 2: fetch metrics — each term as a separate query param
-  const terms = STYLES.map(s => PINTEREST_TERM[s.name] ?? s.kw);
-  const url = new URL('https://trends.pinterest.com/metrics/');
-  terms.forEach(t => url.searchParams.append('terms', t));
-  url.searchParams.set('country', 'PL');
-  url.searchParams.set('end_date', endDate);
-  url.searchParams.set('days', '90');
-  console.log(`Pinterest URL: ${url.toString().slice(0, 120)}...`);
+  // Try PL first, fall back to US
+  for (const country of ['PL', 'US']) {
+    const url = `https://trends.pinterest.com/top_trends_filtered/?country=${country}`;
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(12000) });
+    console.log(`Pinterest top_trends (${country}): HTTP ${res.status()}`);
+    if (!res.ok()) continue;
+    const data = await res.json();
+    const trends = Array.isArray(data) ? data : (data.trends ?? data.results ?? []);
+    console.log(`Pinterest trends count: ${trends.length}`);
+    if (!trends.length) continue;
 
-  const metricsRes = await fetch(url.toString(), {
-    headers: { 'User-Agent': UA, 'Accept': 'application/json' },
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!metricsRes.ok) {
-    const body = await metricsRes.text().catch(() => '');
-    throw new Error(`Pinterest metrics HTTP ${metricsRes.status}: ${body.slice(0, 100)}`);
+    const counts = {};
+    const lowerTerms = trends.map(t =>
+      (typeof t === 'string' ? t : t.term ?? t.keyword ?? t.display_name ?? '').toLowerCase()
+    );
+    for (const s of STYLES) {
+      const kw = s.kw.split(' ')[0].toLowerCase();
+      const hits = lowerTerms.filter(t => t.includes(kw)).length;
+      if (hits > 0) counts[s.name] = hits * 10;
+    }
+    console.log(`Pinterest: ${Object.keys(counts).length} styles matched`);
+    return counts;
   }
-  const data = await metricsRes.json();
-
-  const counts = {};
-  for (let i = 0; i < STYLES.length; i++) {
-    const item = Array.isArray(data) ? data[i] : null;
-    if (!item) continue;
-    const lastCount = item.counts?.at(-1)?.normalizedCount ?? 0;
-    const momChange = item.growth_rates?.mom_change ?? 0;
-    const score = Math.round(lastCount * 0.8 + (momChange > 0 ? momChange * 50 : 0));
-    if (score > 0) counts[STYLES[i].name] = score;
-  }
-  console.log(`Pinterest: ${Object.keys(counts).length} styles with scores`);
-  return counts;
+  throw new Error('Pinterest top_trends failed for PL and US');
 }
 
 // ── Vinted: scrape result count per style from search page ────────────────
@@ -330,6 +313,11 @@ async function fetchVintedStyleCounts(browser) {
     // Accept cookies / set session
     await page.goto('https://www.vinted.pl/', { waitUntil: 'domcontentloaded', timeout: 30000 });
 
+    // Debug: check homepage URL and sample text
+    console.log(`Vinted homepage: ${page.url()}`);
+    const homeSample = await page.evaluate(() => document.body.innerText.slice(0, 100));
+    console.log(`Vinted home sample: ${homeSample.replace(/\n/g, ' ')}`);
+
     const results = [];
     for (const s of STYLES) {
       try {
@@ -337,12 +325,26 @@ async function fetchVintedStyleCounts(browser) {
           `https://www.vinted.pl/catalog?search_text=${encodeURIComponent(s.kw)}&order=relevance`,
           { waitUntil: 'domcontentloaded', timeout: 20000 }
         );
-        // Vinted renders count text like "12 345 wyników" somewhere on the page
+        // Log redirect target and page sample for first style
+        if (results.length === 0) {
+          console.log(`Vinted catalog URL: ${page.url()}`);
+          const sample = await page.evaluate(() => document.body.innerText.slice(0, 200));
+          console.log(`Vinted catalog sample: ${sample.replace(/\n/g, ' ')}`);
+        }
         const count = await page.evaluate(() => {
           const text = document.body.innerText;
-          const m = text.match(/(\d[\d\s]{0,9})\s*wynik/i);
-          if (!m) return 0;
-          return parseInt(m[1].replace(/\s/g, ''), 10) || 0;
+          // Try Polish patterns: "12 345 wyników", "12345 przedmiotów", "Znaleziono 12345"
+          const patterns = [
+            /(\d[\d\s]{0,9})\s*wynik/i,
+            /(\d[\d\s]{0,9})\s*przedmiot/i,
+            /znalezion[oa]\s*(\d[\d\s]{0,9})/i,
+            /(\d[\d\s]{0,9})\s*ofert/i,
+          ];
+          for (const p of patterns) {
+            const m = text.match(p);
+            if (m) return parseInt(m[1].replace(/\s/g, ''), 10) || 0;
+          }
+          return 0;
         });
         console.log(`Vinted ${s.name}: ${count}`);
         results.push({ name: s.name, count });
