@@ -38,9 +38,32 @@ async function fetchGoogleTrends() {
   );
   if (!res.ok) throw new Error(`Google Trends HTTP ${res.status}`);
   const text = await res.text();
+  console.log('[Google Trends] Response length:', text.length);
+  console.log('[Google Trends] First 800 chars:', text.slice(0, 800));
+
+  // Try CDATA format first
   let matches = [...text.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)];
-  if (!matches.length) matches = [...text.matchAll(/<item>[\s\S]*?<title>(.*?)<\/title>/g)];
-  return matches.map(m => m[1].trim()).filter(Boolean).filter(t => t !== 'Daily Search Trends').slice(0, 20);
+  console.log('[Google Trends] CDATA matches:', matches.length);
+
+  // Try plain title inside <item>
+  if (!matches.length) {
+    matches = [...text.matchAll(/<item>[\s\S]*?<title>(.*?)<\/title>/g)];
+    console.log('[Google Trends] Plain item matches:', matches.length);
+  }
+
+  // Try any <title> tag
+  if (!matches.length) {
+    matches = [...text.matchAll(/<title>(.*?)<\/title>/g)];
+    console.log('[Google Trends] Any title matches:', matches.length);
+  }
+
+  const results = matches
+    .map(m => m[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim())
+    .filter(Boolean)
+    .filter(t => !['Daily Search Trends', 'Google Trends'].includes(t))
+    .slice(0, 20);
+  console.log('[Google Trends] Final results:', results);
+  return results;
 }
 
 async function fetchVintedItems() {
