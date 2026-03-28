@@ -322,31 +322,37 @@ async function fetchPinterestMetrics() {
   return counts;
 }
 
-// ── Vinted: count items per style (parallel) ──────────────────────────────
+// ── Vinted: scrape result count per style from search page ────────────────
 async function fetchVintedStyleCounts(browser) {
   const ctx = await browser.newContext({ locale: 'pl-PL', userAgent: UA });
   try {
     const page = await ctx.newPage();
+    // Accept cookies / set session
     await page.goto('https://www.vinted.pl/', { waitUntil: 'domcontentloaded', timeout: 30000 });
-    const results = await Promise.all(STYLES.map(async s => {
+
+    const results = [];
+    for (const s of STYLES) {
       try {
-        const res = await ctx.request.get(
-          `https://www.vinted.pl/api/v2/catalog/items?search_text=${encodeURIComponent(s.kw)}&per_page=1`,
-          { headers: { 'Accept': 'application/json' } }
+        await page.goto(
+          `https://www.vinted.pl/catalog?search_text=${encodeURIComponent(s.kw)}&order=relevance`,
+          { waitUntil: 'domcontentloaded', timeout: 20000 }
         );
-        if (!res.ok()) {
-          console.log(`Vinted ${s.name}: HTTP ${res.status()}`);
-          return { name: s.name, count: 0 };
-        }
-        const json = await res.json();
-        const count = json.pagination?.total_count ?? json.total_count ?? 0;
-        return { name: s.name, count };
+        // Vinted renders count text like "12 345 wyników" somewhere on the page
+        const count = await page.evaluate(() => {
+          const text = document.body.innerText;
+          const m = text.match(/(\d[\d\s]{0,9})\s*wynik/i);
+          if (!m) return 0;
+          return parseInt(m[1].replace(/\s/g, ''), 10) || 0;
+        });
+        console.log(`Vinted ${s.name}: ${count}`);
+        results.push({ name: s.name, count });
       } catch (e) {
         console.log(`Vinted ${s.name} error: ${e.message}`);
-        return { name: s.name, count: 0 };
+        results.push({ name: s.name, count: 0 });
       }
-    }));
-    console.log(`Vinted sample: ${results.slice(0,3).map(r => `${r.name}=${r.count}`).join(', ')}`);
+    }
+    const found = results.filter(r => r.count > 0).length;
+    console.log(`Vinted: ${found}/${results.length} styles with counts`);
     return results;
   } finally { await ctx.close(); }
 }
