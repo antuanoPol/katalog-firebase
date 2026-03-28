@@ -1,4 +1,7 @@
 {
+  "firestore": {
+    "rules": "firestore.rules"
+  },
   "hosting": {
     "public": "dist/katalog-firebase/browser",
     "ignore": ["firebase.json", ".firebaserc", "*.md", ".git", "node_modules"],

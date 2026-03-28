@@ -23,5 +23,5 @@ jobs:
       - name: Build Angular app
         run: npm run build -- --configuration production
 
-      - name: Deploy to Firebase Hosting
-        run: npx firebase-tools deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}" --project vinted-kosztorys --non-interactive
+      - name: Deploy to Firebase Hosting + Firestore Rules
+        run: npx firebase-tools deploy --only hosting,firestore:rules --token "${{ secrets.FIREBASE_TOKEN }}" --project vinted-kosztorys --non-interactive

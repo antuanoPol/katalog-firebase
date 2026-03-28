@@ -43,5 +43,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/auth.component').then(m => m.AuthComponent),
     canActivate: [loggedInGuard],
   },
+  {
+    path: 'trends',
+    loadComponent: () => import('./features/trends/trends.component').then(m => m.TrendsComponent),
+    canActivate: [authGuard],
+  },
   { path: '**', redirectTo: 'catalog' },
 ];
