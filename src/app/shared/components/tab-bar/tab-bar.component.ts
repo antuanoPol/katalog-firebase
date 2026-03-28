@@ -27,12 +27,6 @@ import { DataService } from '../../../core/services/data.service';
         </div>
         <span class="nav-label">Sprzedaż</span>
       </a>
-      <a routerLink="/trends" routerLinkActive="active" class="nav-item">
-        <div class="nav-icon-wrap">
-          <mat-icon>trending_up</mat-icon>
-        </div>
-        <span class="nav-label">Trendy</span>
-      </a>
     </nav>
   `,
   styles: [`
