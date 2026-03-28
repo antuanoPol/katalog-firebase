@@ -46,7 +46,7 @@ async function main() {
     // Run all sources in parallel
     const [googleResult, redditResult, newsResult, magazineResult, wykopResult, pinterestResult, vintedResult] = await Promise.allSettled([
       fetchGoogleTrendsFashion(browser),
-      fetchRedditFashion(),
+      fetchRedditFashion(browser),
       fetchGoogleNewsMentions(),
       fetchPolishFashionMagazines(),
       fetchWykopMentions(),
@@ -142,47 +142,50 @@ async function fetchGoogleTrendsFashion(browser) {
   try {
     const page = await ctx.newPage();
     await page.goto('https://trends.google.com/?geo=PL', { waitUntil: 'domcontentloaded', timeout: 30000 });
-    // Try cat=185 (Apparel & Accessories) first
     for (const url of [
       'https://trends.google.com/trends/api/dailytrends?hl=pl&tz=-60&geo=PL&ns=15&cat=185',
       'https://trends.google.com/trends/api/dailytrends?hl=pl&tz=-60&geo=PL&ns=15',
     ]) {
       const res = await ctx.request.get(url, { headers: { 'Accept': 'application/json' } });
+      console.log(`Google Trends ${url.includes('cat') ? 'fashion' : 'general'}: HTTP ${res.status()}`);
       if (!res.ok()) continue;
       const text = await res.text();
       const nl = text.indexOf('\n');
-      if (nl === -1) continue;
+      if (nl === -1) { console.log('Google Trends: no newline in response'); continue; }
       try {
         const json = JSON.parse(text.slice(nl + 1));
         const searches = json?.default?.trendingSearchesDays?.[0]?.trendingSearches ?? [];
+        console.log(`Google Trends searches in response: ${searches.length}`);
         if (searches.length) return searches.map(t => t.title?.query ?? '').filter(Boolean);
-      } catch { continue; }
+      } catch (e) { console.log(`Google Trends parse error: ${e.message}`); continue; }
     }
     return [];
   } finally { await ctx.close(); }
 }
 
-// ── Source 2: Reddit fashion communities ─────────────────────────────────
-async function fetchRedditFashion() {
-  const subs = 'femalefashionadvice+malefashionadvice+streetwear+femalefashion+fashionadvice+malefemalefashion';
-  const res = await fetch(`https://www.reddit.com/r/${subs}/hot.json?limit=100`, {
-    headers: {
-      'User-Agent': UA,
-      'Accept': 'application/json',
-      'Accept-Language': 'en-US,en;q=0.9',
-    },
-    signal: AbortSignal.timeout(12000),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = await res.json();
-  const text = (json.data?.children ?? []).filter(p => !p.data.stickied)
-    .map(p => p.data.title.toLowerCase()).join(' ');
-  const counts = {};
-  for (const s of STYLES) {
-    const c = (text.match(new RegExp(s.kw.split(' ')[0], 'g')) ?? []).length;
-    if (c > 0) counts[s.name] = c;
-  }
-  return counts;
+// ── Source 2: Reddit fashion communities (via Playwright to bypass IP blocks) ──
+async function fetchRedditFashion(browser) {
+  const ctx = await browser.newContext({ locale: 'en-US', userAgent: UA });
+  try {
+    const page = await ctx.newPage();
+    await page.goto('https://www.reddit.com/', { waitUntil: 'domcontentloaded', timeout: 20000 });
+    const subs = 'femalefashionadvice+malefashionadvice+streetwear+femalefashion+fashionadvice';
+    const res = await ctx.request.get(
+      `https://www.reddit.com/r/${subs}/hot.json?limit=100`,
+      { headers: { 'Accept': 'application/json' } }
+    );
+    console.log(`Reddit API: HTTP ${res.status()}`);
+    if (!res.ok()) throw new Error(`HTTP ${res.status()}`);
+    const json = await res.json();
+    const text = (json.data?.children ?? []).filter(p => !p.data.stickied)
+      .map(p => p.data.title.toLowerCase()).join(' ');
+    const counts = {};
+    for (const s of STYLES) {
+      const c = (text.match(new RegExp(s.kw.split(' ')[0], 'g')) ?? []).length;
+      if (c > 0) counts[s.name] = c;
+    }
+    return counts;
+  } finally { await ctx.close(); }
 }
 
 // ── Source 3: Google News RSS — one query per style (parallel) ────────────
