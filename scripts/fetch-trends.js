@@ -165,8 +165,14 @@ async function fetchGoogleTrendsFashion(browser) {
 // ── Source 2: Reddit fashion communities ─────────────────────────────────
 async function fetchRedditFashion() {
   const subs = 'femalefashionadvice+malefashionadvice+streetwear+femalefashion+fashionadvice+malefemalefashion';
-  const res = await fetch(`https://www.reddit.com/r/${subs}/hot.json?limit=100`,
-    { headers: { 'User-Agent': 'TrendsBot/1.0' } });
+  const res = await fetch(`https://www.reddit.com/r/${subs}/hot.json?limit=100`, {
+    headers: {
+      'User-Agent': UA,
+      'Accept': 'application/json',
+      'Accept-Language': 'en-US,en;q=0.9',
+    },
+    signal: AbortSignal.timeout(12000),
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   const text = (json.data?.children ?? []).filter(p => !p.data.stickied)
@@ -225,11 +231,20 @@ async function fetchPolishFashionMagazines() {
 
 // ── Source 5: Wykop popular links ─────────────────────────────────────────
 async function fetchWykopMentions() {
-  const res = await fetch('https://wykop.pl/rss/wykopalisko',
-    { headers: { 'User-Agent': 'TrendsBot/1.0', 'Accept': 'application/rss+xml, text/xml' },
-      signal: AbortSignal.timeout(8000) });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const text = (await res.text()).toLowerCase();
+  // Try multiple Wykop RSS URLs
+  const urls = ['https://wykop.pl/rss', 'https://wykop.pl/feed', 'https://wykop.pl/rss/wykopalisko'];
+  let text = '';
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        headers: { 'User-Agent': UA, 'Accept': 'application/rss+xml, text/xml, */*' },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (res.ok) { text = (await res.text()).toLowerCase(); console.log(`Wykop OK: ${url}`); break; }
+      console.log(`Wykop ${url}: HTTP ${res.status}`);
+    } catch (e) { console.log(`Wykop ${url} error: ${e.message}`); }
+  }
+  if (!text) throw new Error('All Wykop URLs failed');
   const counts = {};
   for (const s of STYLES) {
     const c = (text.match(new RegExp(s.kw.split(' ')[0], 'g')) ?? []).length;
@@ -270,15 +285,25 @@ async function fetchPinterestMetrics() {
   });
   if (!dateRes.ok) throw new Error(`Pinterest date HTTP ${dateRes.status}`);
   const { date: endDate } = await dateRes.json();
+  console.log(`Pinterest end_date: ${endDate}`);
 
-  // Step 2: fetch metrics for all styles in one request
+  // Step 2: fetch metrics — each term as a separate query param
   const terms = STYLES.map(s => PINTEREST_TERM[s.name] ?? s.kw);
-  const termsParam = terms.map(encodeURIComponent).join('%2C');
-  const metricsRes = await fetch(
-    `https://trends.pinterest.com/metrics/?terms=${termsParam}&country=PL&end_date=${endDate}&days=90&aggregation=2&normalize_against_group=false&predicted_days=0`,
-    { headers: { 'User-Agent': UA, 'Accept': 'application/json' }, signal: AbortSignal.timeout(15000) }
-  );
-  if (!metricsRes.ok) throw new Error(`Pinterest metrics HTTP ${metricsRes.status}`);
+  const url = new URL('https://trends.pinterest.com/metrics/');
+  terms.forEach(t => url.searchParams.append('terms', t));
+  url.searchParams.set('country', 'PL');
+  url.searchParams.set('end_date', endDate);
+  url.searchParams.set('days', '90');
+  console.log(`Pinterest URL: ${url.toString().slice(0, 120)}...`);
+
+  const metricsRes = await fetch(url.toString(), {
+    headers: { 'User-Agent': UA, 'Accept': 'application/json' },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!metricsRes.ok) {
+    const body = await metricsRes.text().catch(() => '');
+    throw new Error(`Pinterest metrics HTTP ${metricsRes.status}: ${body.slice(0, 100)}`);
+  }
   const data = await metricsRes.json();
 
   const counts = {};
@@ -300,17 +325,26 @@ async function fetchVintedStyleCounts(browser) {
   try {
     const page = await ctx.newPage();
     await page.goto('https://www.vinted.pl/', { waitUntil: 'domcontentloaded', timeout: 30000 });
-    return await Promise.all(STYLES.map(async s => {
+    const results = await Promise.all(STYLES.map(async s => {
       try {
         const res = await ctx.request.get(
           `https://www.vinted.pl/api/v2/catalog/items?search_text=${encodeURIComponent(s.kw)}&per_page=1`,
           { headers: { 'Accept': 'application/json' } }
         );
-        if (!res.ok()) return { name: s.name, count: 0 };
+        if (!res.ok()) {
+          console.log(`Vinted ${s.name}: HTTP ${res.status()}`);
+          return { name: s.name, count: 0 };
+        }
         const json = await res.json();
-        return { name: s.name, count: json.pagination?.total_count ?? 0 };
-      } catch { return { name: s.name, count: 0 }; }
+        const count = json.pagination?.total_count ?? json.total_count ?? 0;
+        return { name: s.name, count };
+      } catch (e) {
+        console.log(`Vinted ${s.name} error: ${e.message}`);
+        return { name: s.name, count: 0 };
+      }
     }));
+    console.log(`Vinted sample: ${results.slice(0,3).map(r => `${r.name}=${r.count}`).join(', ')}`);
+    return results;
   } finally { await ctx.close(); }
 }
 
