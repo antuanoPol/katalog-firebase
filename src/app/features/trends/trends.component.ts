@@ -8,7 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
 interface TrendsData {
   updatedAt: string;
   googleTrends: string[];
-  vintedItems: { title: string; brand: string; price: number }[];
+  vintedBrands: { title: string; itemCount: number; prettyCount: string; isLuxury: boolean }[];
 }
 
 @Component({
@@ -64,24 +64,24 @@ interface TrendsData {
         </div>
 
         <!-- Vinted -->
-        @if (trendsData()!.vintedItems.length > 0) {
+        @if (trendsData()!.vintedBrands.length > 0) {
           <div class="section">
             <div class="section-title">
               <mat-icon>local_offer</mat-icon>
               Popularne na Vinted
             </div>
             <div class="vinted-list">
-              @for (item of trendsData()!.vintedItems; track item.title; let i = $index) {
+              @for (item of trendsData()!.vintedBrands; track item.title; let i = $index) {
                 <div class="vinted-item">
                   <span class="vinted-rank">{{ i + 1 }}</span>
                   <div class="vinted-info">
                     <div class="vinted-title">{{ item.title }}</div>
-                    @if (item.brand) {
-                      <div class="vinted-brand">{{ item.brand }}</div>
+                    @if (item.isLuxury) {
+                      <div class="vinted-brand">Luxury</div>
                     }
                   </div>
-                  @if (item.price > 0) {
-                    <div class="vinted-price">{{ item.price | number:'1.2-2' }} zł</div>
+                  @if (item.prettyCount) {
+                    <div class="vinted-price">{{ item.prettyCount }}</div>
                   }
                 </div>
               }

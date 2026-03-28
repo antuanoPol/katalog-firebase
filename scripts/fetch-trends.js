@@ -14,11 +14,11 @@ async function main() {
 
   const [googleResult, vintedResult] = await Promise.allSettled([
     fetchGoogleTrends(),
-    fetchVintedItems(),
+    fetchVintedBrands(),
   ]);
 
   const googleTrends = googleResult.status === 'fulfilled' ? googleResult.value : [];
-  const vintedItems = vintedResult.status === 'fulfilled' ? vintedResult.value : [];
+  const vintedBrands = vintedResult.status === 'fulfilled' ? vintedResult.value : [];
 
   if (googleResult.status === 'rejected') console.error('Google Trends error:', googleResult.reason);
   if (vintedResult.status === 'rejected') console.error('Vinted error:', vintedResult.reason);
@@ -26,57 +26,43 @@ async function main() {
   await db.collection('trends').doc('latest').set({
     updatedAt: new Date().toISOString(),
     googleTrends,
-    vintedItems,
+    vintedBrands,
   });
-  console.log(`Trends updated: ${googleTrends.length} Google, ${vintedItems.length} Vinted items`);
+  console.log(`Trends updated: ${googleTrends.length} Google trends, ${vintedBrands.length} Vinted brands`);
 }
 
 async function fetchGoogleTrends() {
-  const res = await fetch(
-    'https://trends.google.com/trends/trendingsearches/daily/rss?geo=PL',
-    { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } }
-  );
+  const url = 'https://trends.google.com/trends/api/dailytrends?hl=pl&tz=-60&geo=PL&ns=15';
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+  });
   if (!res.ok) throw new Error(`Google Trends HTTP ${res.status}`);
   const text = await res.text();
-  console.log('[Google Trends] Response length:', text.length);
-  console.log('[Google Trends] First 800 chars:', text.slice(0, 800));
-
-  // Try CDATA format first
-  let matches = [...text.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)];
-  console.log('[Google Trends] CDATA matches:', matches.length);
-
-  // Try plain title inside <item>
-  if (!matches.length) {
-    matches = [...text.matchAll(/<item>[\s\S]*?<title>(.*?)<\/title>/g)];
-    console.log('[Google Trends] Plain item matches:', matches.length);
-  }
-
-  // Try any <title> tag
-  if (!matches.length) {
-    matches = [...text.matchAll(/<title>(.*?)<\/title>/g)];
-    console.log('[Google Trends] Any title matches:', matches.length);
-  }
-
-  const results = matches
-    .map(m => m[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim())
-    .filter(Boolean)
-    .filter(t => !['Daily Search Trends', 'Google Trends'].includes(t))
-    .slice(0, 20);
-  console.log('[Google Trends] Final results:', results);
-  return results;
+  const json = JSON.parse(text.slice(text.indexOf('\n') + 1));
+  const days = json?.default?.trendingSearchesDays ?? [];
+  if (!days.length) throw new Error('No trending days in response');
+  const searches = days[0]?.trendingSearches ?? [];
+  return searches.map(t => t.title?.query ?? '').filter(Boolean).slice(0, 20);
 }
 
-async function fetchVintedItems() {
+async function fetchVintedBrands() {
   const res = await fetch(
-    'https://www.vinted.pl/api/v2/catalog/items?search_text=&order=popularity_score&per_page=20',
-    { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'application/json' } }
+    'https://www.vinted.pl/api/v2/brands?page=1&per_page=20&order=popularity',
+    {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+        'Accept-Language': 'pl-PL,pl;q=0.9',
+      },
+    }
   );
-  if (!res.ok) throw new Error(`Vinted HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`Vinted brands HTTP ${res.status}`);
   const json = await res.json();
-  return (json.items ?? []).slice(0, 20).map(i => ({
-    title: i.title ?? '',
-    brand: i.brand_title ?? '',
-    price: i.price_numeric ?? 0,
+  return (json.brands ?? []).slice(0, 20).map(b => ({
+    title: b.title ?? '',
+    itemCount: b.item_count ?? 0,
+    prettyCount: b.pretty_item_count ?? '',
+    isLuxury: b.is_luxury ?? false,
   }));
 }
 
