@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DataService } from '../../../core/services/data.service';
@@ -82,7 +82,7 @@ import { Product } from '../../../core/models/catalog.models';
     </div>
   `,
   styles: [`
-    .detail-wrap { min-width: 320px; max-width: 480px; width: 100%; }
+    .detail-wrap { min-width: 320px; max-width: 480px; width: 100%; max-height: 90dvh; overflow-y: auto; }
     .gallery { width: 100%; }
     .main-img-wrap { position: relative; background: #111; }
     .main-img { width: 100%; max-height: 320px; object-fit: contain; display: block; }
@@ -126,7 +126,6 @@ import { Product } from '../../../core/models/catalog.models';
 })
 export class ProductDetailComponent {
   private data = inject(DataService);
-  private dialogRef = inject(MatDialogRef<ProductDetailComponent>);
   product: Product = inject(MAT_DIALOG_DATA);
 
   currentIndex = signal(0);
