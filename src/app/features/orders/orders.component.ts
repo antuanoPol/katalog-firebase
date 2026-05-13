@@ -10,7 +10,8 @@ import { DataService } from '../../core/services/data.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { OrderDetailComponent } from './order-detail/order-detail.component';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/confirm-dialog/confirm-dialog.component';
-
+import { ManualSaleDialogComponent } from '../../shared/modals/manual-sale-dialog/manual-sale-dialog.component';
+ 
 @Component({
   selector: 'app-orders',
   standalone: true,
@@ -46,6 +47,9 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/c
             </mat-select>
           </mat-form-field>
           <div class="header-actions">
+            <button mat-stroked-button (click)="onAddManualSale()" title="Dodaj sprzedaż ręcznie" class="btn-manual-sale">
+              <mat-icon>add</mat-icon> Sprzedaż
+            </button>
             @if (selectedOrderId()) {
               <button mat-icon-button (click)="onDelete()" title="Usuń zamówienie" class="btn-danger">
                 <mat-icon>delete</mat-icon>
@@ -57,7 +61,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/c
           </div>
         </div>
       </div>
-
+ 
       @if (selectedOrder()) {
         <app-order-detail [order]="selectedOrder()!" />
       }
@@ -104,6 +108,12 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/modals/c
     .header-actions { display: flex; align-items: center; padding-top: 4px; }
     .btn-danger { color: var(--danger) !important; }
     .btn-panel { color: var(--primary) !important; }
+    .btn-manual-sale {
+      font-size: 12px; font-weight: 700; letter-spacing: .04em;
+      color: var(--primary) !important; border-color: var(--border-amber, rgba(255,193,7,.4)) !important;
+      height: 36px; line-height: 36px; padding: 0 10px;
+    }
+    .btn-manual-sale mat-icon { font-size: 16px; width: 16px; height: 16px; margin-right: 2px; }
     .opt-count { color: var(--text-muted); font-size: 11px; }
   `],
 })
@@ -111,13 +121,17 @@ export class OrdersComponent {
   data = inject(DataService);
   private notify = inject(NotificationService);
   private dialog = inject(MatDialog);
-
+ 
   selectedOrderId = signal('');
-
+ 
   selectedOrder = computed(() =>
     this.data.orders().find(o => o.id === this.selectedOrderId()) ?? null
   );
-
+ 
+  onAddManualSale(): void {
+    this.dialog.open(ManualSaleDialogComponent, { width: '420px' });
+  }
+ 
   onDelete(): void {
     const order = this.selectedOrder();
     if (!order) return;
